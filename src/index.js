@@ -24,7 +24,13 @@ const makeCsgViewer = function (container, options = {}) {
     csgCheck: false,
     background: [1, 1, 1, 1],
     meshColor: [1, 0.5, 0.5, 1],
-    gridColor: [1, 1, 1, 1],
+    grid: {
+      show: false,
+      color: [1, 1, 1, 1]
+    },
+    axes: {
+      show: true
+    },
     lighting: {
       smooth: false
     },
@@ -37,7 +43,9 @@ const makeCsgViewer = function (container, options = {}) {
         maxDistance: 16000,
         minDistance: 0.01
       },
-      zoomToFit: 'all'
+      zoomToFit: {
+        targets: 'all'
+      }
     }
   }
 
