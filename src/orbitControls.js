@@ -27,7 +27,18 @@ rotate => modify the angle input
 
 */
 
-const controlProps = {
+const controlsProps = {
+  limits: {
+    minDistance: 30,
+    maxDistance: 800
+  },
+  drag: 0.27, // Decrease the momentum by 1% each iteration
+  EPS: 0.000001,
+  zoomToFit: {
+    targets: 'all',
+    tightness: 1.5 // how close should the fit be: the lower the tigher : 1 means very close, but fitting most of the time
+  },
+  // all these, not sure are needed in this shape
   userControl: {
     zoom: true,
     zoomSpeed: 1.0,
@@ -50,31 +61,8 @@ const controlsState = {
   scale: 1
 }
 
-const cameraSettings = {
-  limits: {
-    minDistance: 30,
-    maxDistance: 800
-  },
-  EPS: 0.000001,
-  drag: 0.27 // Decrease the momentum by 1% each iteration
-}
-
-const cameraState = {
-  view: mat4.identity(new Float32Array(16)),
-  projection: mat4.identity(new Float32Array(16)),
-  near: 1, // 0.01,
-  far: 1300,
-  up: [0, 0, 1],
-  // distance: 10.0,
-  eye: new Float32Array(3), // same as position
-  position: [150, 250, 200],
-  target: [0, 0, 0],
-  fov: Math.PI / 4,
-  aspect: 1
-}
-
-const defaultState = Object.assign({}, {cameraState, controlsState})
-const defaultSettings = Object.assign({}, {cameraSettings, controlProps})
+const defaultState = Object.assign({}, {controlsState})
+const defaultSettings = Object.assign({}, {controlsProps})
 
 function update (state = defaultState, settings = defaultSettings) {
   // custom z up is settable, with inverted Y and Z (since we use camera[2] => up)
@@ -267,7 +255,8 @@ function zoomToFit (params, camera, entity) {
   // our camera.fov is already in radian, no need to convert
   const {fov, target, position} = camera
   const {bounds} = entity
-
+  const {zoomToFit} = Object.assign({}, params, controlsProps)
+  const {tightness} = zoomToFit
   /*
     - x is scaleForIdealDistance
     - currentDistance is fixed
@@ -275,7 +264,7 @@ function zoomToFit (params, camera, entity) {
     So
     x = idealDistance / currentDistance
   */
-  const idealDistanceFromCamera = (bounds.dia * 1.5) / Math.tan(fov / 2.0)
+  const idealDistanceFromCamera = (bounds.dia * tightness) / Math.tan(fov / 2.0)
   const currentDistance = vec3.distance(target, position)
   const scaleForIdealDistance = idealDistanceFromCamera / currentDistance
 
@@ -336,11 +325,12 @@ function setFocus (params, camera, focusPoint) {
   } */
 }
 module.exports = {
-  controlProps,
+  controlsProps,
+  controlsState,
   update,
-rotate,
-zoom,
-pan,
-zoomToFit,
-reset
+  rotate,
+  zoom,
+  pan,
+  zoomToFit,
+  reset
 }
