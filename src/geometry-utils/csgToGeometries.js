@@ -38,7 +38,7 @@ function csgToGeometries (csgs, options) {
 
     let normalPositionLookup = []
     normalPositionLookup = {}
-    let fooindex = 0
+    let tupplesIndex = 0
 
     for (let i = 0; i < polygons.length; i++) {
       const polygon = polygons[i]
@@ -61,20 +61,20 @@ function csgToGeometries (csgs, options) {
           const existingTupple = fuzyNormalAndPositionLookup(normalPositionLookup, candidateTupple, normalThreshold)
           if (!existingTupple) {
             const existingPositing = normalPositionLookup[candidateTupple.position]
-            const itemToAdd = [{normal: candidateTupple.normal, index: fooindex}]
+            const itemToAdd = [{normal: candidateTupple.normal, index: tupplesIndex}]
             if (!existingPositing) {
               normalPositionLookup[candidateTupple.position] = itemToAdd
             } else {
               normalPositionLookup[candidateTupple.position] = normalPositionLookup[candidateTupple.position]
                 .concat(itemToAdd)
             }
-            index = fooindex
+            index = tupplesIndex
             // normalPositionLookup.push(candidateTupple)
             // index = normalPositionLookup.length - 1
             colors.push(color)
             normals.push(normal)
             positions.push(position)
-            fooindex += 1
+            tupplesIndex += 1
           } else {
             index = existingTupple.index
           }
