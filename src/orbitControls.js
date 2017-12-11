@@ -199,7 +199,7 @@ function zoom (params, camera, zoomDelta = 0) {
     const sign = Math.sign(zoomDelta) === 0 ? 1 : Math.sign(zoomDelta)
     zoomDelta = (zoomDelta / zoomDelta) * sign * 0.01// params.userControl.zoomSpeed
     // adjust zoom scaling based on distance : the closer to the target, the lesser zoom scaling we apply
-    //zoomDelta *= Math.exp(Math.max(camera.scale * 0.05, 1))
+    // zoomDelta *= Math.exp(Math.max(camera.scale * 0.05, 1))
     // updated scale after we will apply the new zoomDelta to the current scale
     const newScale = (zoomDelta + camera.scale)
     // updated distance after the scale has been updated, used to prevent going outside limits
@@ -275,7 +275,7 @@ function zoomToFit (params, camera, entity) {
     So
     x = idealDistance / currentDistance
   */
-  const idealDistanceFromCamera = (bounds.dia) / Math.tan(fov / 2.0)
+  const idealDistanceFromCamera = (bounds.dia * 1.5) / Math.tan(fov / 2.0)
   const currentDistance = vec3.distance(target, position)
   const scaleForIdealDistance = idealDistanceFromCamera / currentDistance
 
@@ -337,5 +337,10 @@ function setFocus (params, camera, focusPoint) {
 }
 module.exports = {
   controlProps,
-  update, rotate, zoom, pan, zoomToFit, reset
+  update,
+rotate,
+zoom,
+pan,
+zoomToFit,
+reset
 }
