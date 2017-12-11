@@ -22,18 +22,6 @@ const makeCsgViewer = function (container, options = {}) {
   const defaults = {
     singleton: true,
     csgCheck: false,
-    background: [1, 1, 1, 1],
-    meshColor: [1, 0.5, 0.5, 1],
-    grid: {
-      show: false,
-      color: [1, 1, 1, 1]
-    },
-    axes: {
-      show: true
-    },
-    lighting: {
-      smooth: false
-    },
     camera: {
       position: [150, 250, 200],
       far: 18000
@@ -46,6 +34,18 @@ const makeCsgViewer = function (container, options = {}) {
       zoomToFit: {
         targets: 'all'
       }
+    },
+    background: [1, 1, 1, 1],
+    meshColor: [1, 0.5, 0.5, 1],
+    grid: {
+      show: false,
+      color: [1, 1, 1, 1]
+    },
+    axes: {
+      show: true
+    },
+    lighting: {
+      smooth: false
     }
   }
 
