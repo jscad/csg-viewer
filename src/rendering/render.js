@@ -33,6 +33,7 @@ const prepareRender = (regl, params) => {
   const drawGrid = makeDrawGrid(regl, {size: [1800, 1800], ticks: 10})
 
   let command = (props) => {
+    console.log('params in render', props.background)
     const {meshColor, background} = props
 
     renderWrapper(regl)(props, context => {

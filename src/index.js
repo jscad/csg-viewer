@@ -80,8 +80,31 @@ const makeCsgViewer = function (container, options = {}) {
     initialized = true
   }
 
-  return function (options = {}, data) {
-    let params = Object.assign({}, baseParams, options)
+  /*
+  // some params become state and NEED to be passed to the render function
+    background
+    meshColor
+    grid: {
+      show,
+      color
+    },
+     axes: {
+      show
+    }
+    lighting
+
+  // some others are 'one time use' and should be reset to default if the main function is called
+  without setting them explictely ?
+  */
+  let prevParams = Object.assign({}, baseParams)
+
+  /** main viewer function : call this one with different parameters and/or data to update the viewer
+   * @param  {Object} options={}
+   * @param  {Object} data
+   */
+  return function csgViewer (options = {}, data) {
+    let params = Object.assign({}, prevParams, options)
+    prevParams = params
 
     // setup data
     // warning !!! fixTJunctions alters the csg and can result in visual issues ??
@@ -108,6 +131,7 @@ const makeCsgViewer = function (container, options = {}) {
     cameraAndControls(render)
     // FIXME: hack for now, normally there would be an array of entities
     params.entity = entity
+    console.log('in index', params.background)
     params$.next(params)
 
     return regl

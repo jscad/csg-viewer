@@ -11,6 +11,9 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
   let camera = Object.assign({}, initialState)
   const settings = Object.assign({}, initialState)
 
+  // params$ = params$.skipRepeats()
+  // perhaps use skipRepeatsWith
+
   let rotations$ = gestures.drags
     .filter(x => x !== undefined) // TODO: add this at gestures.drags level
     .map(function (data) {
@@ -38,16 +41,17 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
     .filter(x => x !== undefined)
     .multicast()
 
-  let reset$ = gestures.taps
-    .filter(taps => taps.nb === 2)
-
-  const onFirstStart$ = resize$.take(1).multicast() // there is an initial resize event, that we reuse
-
   let zoom$ = gestures.zooms
     .startWith(0) // TODO: add this at gestures.zooms level
     .map(x => -x) // we invert zoom direction
     .filter(x => !isNaN(x)) // TODO: add this at gestures.zooms level
     .multicast()
+
+  let reset$ = gestures.taps
+    .filter(taps => taps.nb === 2)
+    .multicast()
+
+  const onFirstStart$ = resize$.take(1).multicast() // there is an initial resize event, that we reuse
 
   resize$ = resize$
     .map(sizes => {
@@ -80,6 +84,7 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
   ])
   .combine((_, params) => params, params$)
   .map(params => {
+    console.log('params in zoomToFit', params.background)
     camera = params.controls && params.controls.zoomToFit && params.controls.zoomToFit.targets === 'all'
       ? Object.assign({}, camera, zoomToFit(settings, camera, params.entity))
       : camera
@@ -91,11 +96,12 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
   reset$ = reset$
     .sample(params => params, params$)
     .map(params => {
+      console.log('params for reset', params.background)
       camera = Object.assign({}, camera, reset(settings, camera, initialState))
       // then apply zoomToFIt
       camera = Object.assign({}, camera, zoomToFit(settings, camera, params.entity))
       return camera
-    })
+    }).multicast()
 
   let merged$ = most.mergeArray([
     resize$,
@@ -107,19 +113,23 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
   ]).multicast()
 
   merged$ = merged$
-    .sample((params, camera) => ({params, camera}), params$, merged$)
-    .map(({params, camera}) => {// we use the camera state output, not the 'global' state
+    .combine((camera, params) => ({params, camera}), params$)
+    .map(({params, camera}) => { // we use the camera state output, not the 'global' state
+      console.log('params before render', params.background)
       camera = Object.assign({}, camera, update(camera, settings))
       return Object.assign({}, params, {camera})
     })
+    .multicast()
+    // .skipRepeats() perhaps use skipRepeatsWith
 
     // we use a subscription to be able to unsubscribe in case the viewer needs to be recreated
   return (render) => {
     if (subscription) {
+      console.log('unsbub')
       subscription.unsubscribe()
     }
+    console.log('sub')
     subscription = merged$
-      .multicast()
       .subscribe({next: render})
   }
 }
