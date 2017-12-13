@@ -4,7 +4,7 @@ const {holdSubject} = require('./observable-utils/most-subject/index')
 // require('most-subject')github:briancavalier/most-subject : issues with webpack hence the above
 
 const prepareRender = require('./rendering/render')
-const prepareCameraAndControls = require('./cameraAndControls')
+const prepareCameraAndControls = require('./cameraAndControls/cameraAndControls')
 const csgToGeometries = require('./geometry-utils/csgToGeometries')
 const computeBounds = require('./bound-utils/computeBounds')
 const areCSGsIdentical = require('./csg-utils/areCSGsIdentical')
@@ -73,7 +73,7 @@ const makeCsgViewer = function (container, options = {}) {
     regl = require('regl')(container)
     // setup interactions, change when container changes
     gestures = pointerGestures(container)
-    resizes$ = require('./elementSizing')(container)
+    resizes$ = require('./cameraAndControls/elementSizing')(container)
     cameraAndControls = prepareCameraAndControls(gestures, resizes$, container, baseParams, params$)
   }
   if (baseParams.singleton) {

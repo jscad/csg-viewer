@@ -103,6 +103,12 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
       return camera
     }).multicast()
 
+  const camAndControlDirectSettings$ = 
+    params$.map(function(params){
+      const desiredState = params.camera.position
+      camera = Object.assign({}, camera, reset(settings, camera, initialState))
+    })
+
   let merged$ = most.mergeArray([
     resize$,
     rotations$,

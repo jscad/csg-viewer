@@ -275,7 +275,7 @@ function zoomToFit (params, camera, entity) {
 }
 
 /**
-  * compute camera state to 'reset it' to the given state
+  * compute controls state to 'reset it' to the given state
   * Note1: this is a non optimal but fast & easy implementation
   * @param {Object} params the camera parameters
   * @param {Object} camera the camera data/state
