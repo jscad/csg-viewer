@@ -35,6 +35,7 @@ const controlsProps = {
   drag: 0.27, // Decrease the momentum by 1% each iteration
   EPS: 0.000001,
   zoomToFit: {
+    auto: true, // always tried to apply zoomTofit
     targets: 'all',
     tightness: 1.5 // how close should the fit be: the lower the tigher : 1 means very close, but fitting most of the time
   },
@@ -61,13 +62,13 @@ const controlsState = {
   scale: 1
 }
 
-const defaultState = Object.assign({}, {controlsState})
-const defaultSettings = Object.assign({}, {controlsProps})
+const defaultState = Object.assign({}, {controlsState, controlsProps})
 
-function update (cameraState, controlsState = defaultState, settings = defaultSettings) {
+function update (controlsState = defaultState, cameraState) {
   // custom z up is settable, with inverted Y and Z (since we use camera[2] => up)
-  const {EPS, up, drag} = settings
+  const {EPS, drag} = controlsState
   let {position, target, view} = cameraState
+  const up = controlsState.up ? controlsState.up : cameraState.up
 
   let curThetaDelta = controlsState.thetaDelta
   let curPhiDelta = controlsState.phiDelta
@@ -92,8 +93,8 @@ function update (cameraState, controlsState = defaultState, settings = defaultSe
   // curThetaDelta = -(curThetaDelta)
   }
 
-  if (settings.autoRotate.enabled && settings.userControl.rotate) {
-    curThetaDelta += 2 * Math.PI / 60 / 60 * settings.autoRotate.speed // arbitrary, kept for backwards compatibility
+  if (controlsState.autoRotate.enabled && controlsState.userControl.rotate) {
+    curThetaDelta += 2 * Math.PI / 60 / 60 * controlsState.autoRotate.speed // arbitrary, kept for backwards compatibility
   }
 
   theta += curThetaDelta
@@ -102,7 +103,7 @@ function update (cameraState, controlsState = defaultState, settings = defaultSe
   // restrict phi to be betwee EPS and PI-EPS
   phi = max(EPS, min(PI - EPS, phi))
   // multiply by scaling effect and restrict radius to be between desired limits
-  const radius = max(settings.limits.minDistance, min(settings.limits.maxDistance, vec3.length(offset) * curScale))
+  const radius = max(controlsState.limits.minDistance, min(controlsState.limits.maxDistance, vec3.length(offset) * curScale))
 
   if (up[2] === 1) {
     offset[0] = radius * sin(phi) * sin(theta)
@@ -132,13 +133,16 @@ function update (cameraState, controlsState = defaultState, settings = defaultSe
   return {
     changed: positionChanged,
     // controls state
-    thetaDelta: curThetaDelta * dragEffect,
-    phiDelta: curPhiDelta * dragEffect,
-    scale: 1,
-
+    controls: {
+      thetaDelta: curThetaDelta * dragEffect,
+      phiDelta: curPhiDelta * dragEffect,
+      scale: 1
+    },
     // camera state
-    position: newPosition,
-    view: newView
+    camera: {
+      position: newPosition,
+      view: newView
+    }
     // matrix: newMatrix
   }
 }
@@ -162,10 +166,10 @@ function rotate (controls, camera, angle) {
     phiDelta += (angle[1] / reductionFactor)
   }
 
-  return {
+  return {controls: {
     thetaDelta,
     phiDelta
-  }
+  }}
 }
 
 /**
@@ -180,7 +184,7 @@ function zoom (controls, camera, zoomDelta = 0) {
 
   if (controls.userControl.zoom && camera && zoomDelta !== undefined && zoomDelta !== 0 && !isNaN(zoomDelta)) {
     const sign = Math.sign(zoomDelta) === 0 ? 1 : Math.sign(zoomDelta)
-    zoomDelta = (zoomDelta / zoomDelta) * sign * 0.01// controls.userControl.zoomSpeed
+    zoomDelta = (zoomDelta / zoomDelta) * sign * 0.04// controls.userControl.zoomSpeed
     // adjust zoom scaling based on distance : the closer to the target, the lesser zoom scaling we apply
     // zoomDelta *= Math.exp(Math.max(camera.scale * 0.05, 1))
     // updated scale after we will apply the new zoomDelta to the current scale
@@ -188,6 +192,7 @@ function zoom (controls, camera, zoomDelta = 0) {
     // updated distance after the scale has been updated, used to prevent going outside limits
     const newDistance = vec3.distance(camera.position, camera.target) * newScale
 
+    console.log('controls.limits.maxDistance',controls.limits.maxDistance)
     if (newDistance > controls.limits.minDistance && newDistance < controls.limits.maxDistance) {
       scale += zoomDelta
     }
@@ -198,9 +203,7 @@ function zoom (controls, camera, zoomDelta = 0) {
       camera.near = Math.min(Math.max(5, distance * 0.0015), 100)
     } */
   }
-  return {
-    scale
-  }
+  return {controls: {scale}}
 }
 
 /**
@@ -232,10 +235,10 @@ function pan (controls, camera, delta) {
   // const planesDiff = camera.far - camera.near
   const offset = vec3.subtract([], unPanStart, unPanEnd).map(x => x * 1000 * controls.userControl.panSpeed * controls.scale)
 
-  return {
+  return {camera: {
     position: vec3.add(vec3.create(), camera.position, offset),
     target: vec3.add(vec3.create(), camera.target, offset)
-  }
+  }}
 }
 
 /**
@@ -246,12 +249,15 @@ function pan (controls, camera, delta) {
   * @param {Object} entity an object containing a 'bounds' property for bounds information
   * @return {Object} the updated camera data/state
 */
-function zoomToFit (controls, camera, entity) {
+function zoomToFit (controls, camera) {
   // our camera.fov is already in radian, no need to convert
+  const {zoomToFit, entity} = controls
+  if (zoomToFit.targets !== 'all' || entity === undefined || !entity.bounds) {
+    return {camera, controls}
+  }
   const {fov, target, position} = camera
-  const {bounds} = entity
-  const {zoomToFit} = Object.assign({}, controls, controlsProps)
-  const {tightness} = zoomToFit
+  const {bounds} = controls.entity
+  const {tightness} = Object.assign({}, zoomToFit, controlsProps.zoomToFit)
   /*
     - x is scaleForIdealDistance
     - currentDistance is fixed
@@ -264,8 +270,8 @@ function zoomToFit (controls, camera, entity) {
   const scaleForIdealDistance = idealDistanceFromCamera / currentDistance
 
   return {
-    target: bounds.center,
-    scale: scaleForIdealDistance
+    camera: {target: bounds.center},
+    controls: {scale: scaleForIdealDistance}
   }
 }
 
@@ -278,17 +284,26 @@ function zoomToFit (controls, camera, entity) {
   * @return {Object} the updated camera data/state
 */
 function reset (controls, camera, desiredState) {
-  return Object.assign({}, camera, {
-    position: desiredState.position,
-    target: desiredState.target,
-
-    thetaDelta: desiredState.thetaDelta,
-    phiDelta: desiredState.phiDelta,
-    scale: desiredState.scale,
-
-    projection: mat4.perspective([], camera.fov, camera.aspect, camera.near, camera.far),
-    view: desiredState.view
-  })
+  camera = Object.assign({}, camera, desiredState.camera)
+  camera.projection = mat4.perspective([], camera.fov, camera.aspect, camera.near, camera.far)
+  controls = Object.assign({}, controls, desiredState.controls)
+  return {
+    camera,
+    controls
+  }
+  /*return {
+    camera: {
+      position: desiredState.position,
+      target: desiredState.target,
+      projection: mat4.perspective([], camera.fov, camera.aspect, camera.near, camera.far),
+      view: desiredState.view
+    },
+    controls: {
+      thetaDelta: desiredState.thetaDelta,
+      phiDelta: desiredState.phiDelta,
+      scale: desiredState.scale
+    }
+  }*/
 }
 
 // FIXME: upgrade or obsolete

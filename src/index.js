@@ -8,7 +8,7 @@ const prepareCameraAndControls = require('./cameraAndControls/cameraAndControls'
 const csgToGeometries = require('./geometry-utils/csgToGeometries')
 const computeBounds = require('./bound-utils/computeBounds')
 const areCSGsIdentical = require('./csg-utils/areCSGsIdentical')
-const most = require('most')
+const nestedObjectAssign = require('nested-object-assign')
 
 function flatten (array) {
   return [].concat(...array)
@@ -65,7 +65,8 @@ const makeCsgViewer = function (container, options = {}) {
   // we keep the render function around, until we need to swap it out in case of new data
   let render
 
-  let baseParams = Object.assign({}, defaults, options)
+  let baseParams = nestedObjectAssign({}, defaults, options)
+
   // we use an observable of parameters to play nicely with the other observables
   // note: subjects are anti patterns, but they simplify things here so ok for now
   const params$ = holdSubject()
@@ -73,7 +74,7 @@ const makeCsgViewer = function (container, options = {}) {
     setParams$: params$.map(data => ({type: 'setParams', data}))
   }
   //const paramsState$ = 
-
+  console.log('baseParams', baseParams, options)
   if (!baseParams.singleton || (baseParams.singleton && !initialized)) {
     // initialize when container changes
     regl = require('regl')(container)
@@ -146,7 +147,7 @@ const makeCsgViewer = function (container, options = {}) {
         geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays as inputs
         geometry = geometry[0]
         const time = (performance.now() - start) / 1000
-        console.log(`Total time for geometry conversion: ${time} s`)
+        // console.log(`Total time for geometry conversion: ${time} s`)
         // console.log('geometry', geometry)
         bounds = computeBounds({geometry: geometry})// FXIME : ACTUALLY deal with arrays as inputs
       }
