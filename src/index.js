@@ -8,6 +8,7 @@ const prepareCameraAndControls = require('./cameraAndControls/cameraAndControls'
 const csgToGeometries = require('./geometry-utils/csgToGeometries')
 const computeBounds = require('./bound-utils/computeBounds')
 const areCSGsIdentical = require('./csg-utils/areCSGsIdentical')
+const most = require('most')
 
 function flatten (array) {
   return [].concat(...array)
@@ -22,6 +23,7 @@ const makeCsgViewer = function (container, options = {}) {
   const defaults = {
     singleton: true,
     csgCheck: false,
+    // after this , initial params of camera, controls & render
     camera: {
       position: [150, 250, 200],
       far: 18000
@@ -67,6 +69,10 @@ const makeCsgViewer = function (container, options = {}) {
   // we use an observable of parameters to play nicely with the other observables
   // note: subjects are anti patterns, but they simplify things here so ok for now
   const params$ = holdSubject()
+  const actions = {
+    setParams$: params$.map(data => ({type: 'setParams', data}))
+  }
+  //const paramsState$ = 
 
   if (!baseParams.singleton || (baseParams.singleton && !initialized)) {
     // initialize when container changes
@@ -79,6 +85,23 @@ const makeCsgViewer = function (container, options = {}) {
   if (baseParams.singleton) {
     initialized = true
   }
+
+ /* const setParams$ = params$.map(x => ({action: 'setParams', value: x}))
+  const drags$ = gestures.drags.map(x => ({action: 'drag', value: x}))
+
+  const camcontrolsState$ = most.mergeArray([setParams$, drags$])
+    .scan(function (state, action) {
+      return state
+    }, Object.assign({}, baseParams.camera, baseParams.controls))
+
+  const otherState$ = most.just({foo: 42}).multicast()
+
+  // const viewerState$ =
+  most.combineArray(function (...[camera, other]) {
+    console.log('here', camera, other)
+    return {camera, other}
+  }, [camcontrolsState$, otherState$])
+  .forEach(x => console.log('viewerState', x)) */
 
   /*
   // some params become state and NEED to be passed to the render function
@@ -93,18 +116,23 @@ const makeCsgViewer = function (container, options = {}) {
     }
     lighting
 
+  // some should be kept to the initial defaults
+  params.csgCheck
+  smoothLighting
+
   // some others are 'one time use' and should be reset to default if the main function is called
   without setting them explictely ?
   */
-  let prevParams = Object.assign({}, baseParams)
+  // let prevParams = Object.assign({}, baseParams)
 
   /** main viewer function : call this one with different parameters and/or data to update the viewer
    * @param  {Object} options={}
    * @param  {Object} data
    */
   return function csgViewer (options = {}, data) {
-    let params = Object.assign({}, prevParams, options)
-    prevParams = params
+    // let params = Object.assign({}, prevParams, options)
+    // prevParams = params
+    const params = options
 
     // setup data
     // warning !!! fixTJunctions alters the csg and can result in visual issues ??
@@ -114,7 +142,7 @@ const makeCsgViewer = function (container, options = {}) {
       if (!params.csgCheck || !areCSGsIdentical(csg, cachedCsg)) {
         cachedCsg = csg
         const start = performance.now()
-        const geometries = csgToGeometries(csg, {smoothLighting: params.lighting.smooth})//, normalThreshold: 0})
+        const geometries = csgToGeometries(csg, {smoothLighting: baseParams.lighting.smooth})//, normalThreshold: 0})
         geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays as inputs
         geometry = geometry[0]
         const time = (performance.now() - start) / 1000
@@ -131,7 +159,7 @@ const makeCsgViewer = function (container, options = {}) {
     cameraAndControls(render)
     // FIXME: hack for now, normally there would be an array of entities
     params.entity = entity
-    console.log('in index', params.background)
+    console.log('in index', params)
     params$.next(params)
 
     return regl

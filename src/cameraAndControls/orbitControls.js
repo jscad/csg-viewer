@@ -64,15 +64,14 @@ const controlsState = {
 const defaultState = Object.assign({}, {controlsState})
 const defaultSettings = Object.assign({}, {controlsProps})
 
-function update (state = defaultState, settings = defaultSettings) {
+function update (cameraState, controlsState = defaultState, settings = defaultSettings) {
   // custom z up is settable, with inverted Y and Z (since we use camera[2] => up)
-  const camera = state
   const {EPS, up, drag} = settings
-  let {position, target, matrix, view} = camera
+  let {position, target, view} = cameraState
 
-  let curThetaDelta = camera.thetaDelta
-  let curPhiDelta = camera.phiDelta
-  let curScale = camera.scale
+  let curThetaDelta = controlsState.thetaDelta
+  let curPhiDelta = controlsState.phiDelta
+  let curScale = controlsState.scale
 
   let offset = vec3.subtract([], position, target)
   let theta
@@ -118,10 +117,6 @@ function update (state = defaultState, settings = defaultSettings) {
   let newPosition = vec3.add(vec3.create(), target, offset)
   let newView = mat4.lookAt(view, newPosition, target, up)
 
-  // temporary setup for camera 'move/zoom to fit'
-  let near = camera.near
-  let projection = camera.projection
-
   const dragEffect = 1 - max(min(drag, 1.0), 0.01)
   const positionChanged = vec3.distance(position, newPosition) > 0 // TODO optimise
 
@@ -136,13 +131,13 @@ function update (state = defaultState, settings = defaultSettings) {
   // view = newMatrix
   return {
     changed: positionChanged,
+    // controls state
     thetaDelta: curThetaDelta * dragEffect,
     phiDelta: curPhiDelta * dragEffect,
     scale: 1,
 
+    // camera state
     position: newPosition,
-    near,
-    projection,
     view: newView
     // matrix: newMatrix
   }
@@ -150,19 +145,19 @@ function update (state = defaultState, settings = defaultSettings) {
 
 /**
   * compute camera state to rotate the camera
-  * @param {Object} params the camera parameters
+  * @param {Object} controls the controls data/state
   * @param {Object} camera the camera data/state
   * @param {Float} angle value of the angle to rotate
   * @return {Object} the updated camera data/state
 */
-function rotate (params, camera, angle) {
+function rotate (controls, camera, angle) {
   const reductionFactor = 500
   let {
     thetaDelta,
     phiDelta
-  } = camera
+  } = controls
 
-  if (params.userControl.rotate) {
+  if (controls.userControl.rotate) {
     thetaDelta += (angle[0] / reductionFactor)
     phiDelta += (angle[1] / reductionFactor)
   }
@@ -175,29 +170,29 @@ function rotate (params, camera, angle) {
 
 /**
   * compute camera state to zoom the camera
-  * @param {Object} params the camera parameters
+  * @param {Object} controls the controls data/state
   * @param {Object} camera the camera data/state
   * @param {Float} zoomDelta value of the zoom
   * @return {Object} the updated camera data/state
 */
-function zoom (params, camera, zoomDelta = 0) {
-  let {scale} = camera
+function zoom (controls, camera, zoomDelta = 0) {
+  let {scale} = controls
 
-  if (params.userControl.zoom && camera && zoomDelta !== undefined && zoomDelta !== 0 && !isNaN(zoomDelta)) {
+  if (controls.userControl.zoom && camera && zoomDelta !== undefined && zoomDelta !== 0 && !isNaN(zoomDelta)) {
     const sign = Math.sign(zoomDelta) === 0 ? 1 : Math.sign(zoomDelta)
-    zoomDelta = (zoomDelta / zoomDelta) * sign * 0.01// params.userControl.zoomSpeed
+    zoomDelta = (zoomDelta / zoomDelta) * sign * 0.01// controls.userControl.zoomSpeed
     // adjust zoom scaling based on distance : the closer to the target, the lesser zoom scaling we apply
     // zoomDelta *= Math.exp(Math.max(camera.scale * 0.05, 1))
     // updated scale after we will apply the new zoomDelta to the current scale
-    const newScale = (zoomDelta + camera.scale)
+    const newScale = (zoomDelta + controls.scale)
     // updated distance after the scale has been updated, used to prevent going outside limits
     const newDistance = vec3.distance(camera.position, camera.target) * newScale
 
-    if (newDistance > params.limits.minDistance && newDistance < params.limits.maxDistance) {
+    if (newDistance > controls.limits.minDistance && newDistance < controls.limits.maxDistance) {
       scale += zoomDelta
     }
 
-    /* if (params.autoAdjustPlanes) {
+    /* if (controls.autoAdjustPlanes) {
       // these are empirical values , after a LOT of testing
       const distance = vec3.squaredDistance(camera.target, camera.position)
       camera.near = Math.min(Math.max(5, distance * 0.0015), 100)
@@ -210,12 +205,12 @@ function zoom (params, camera, zoomDelta = 0) {
 
 /**
   * compute camera state to pan the camera
-  * @param {Object} params the camera parameters
+  * @param {Object} controls the controls data/state
   * @param {Object} camera the camera data/state
   * @param {Float} delta value of the raw pan delta
   * @return {Object} the updated camera data/state
 */
-function pan (params, camera, delta) {
+function pan (controls, camera, delta) {
   const unproject = require('camera-unproject')
   const {projection, view, viewport} = camera
   const combinedProjView = mat4.multiply([], projection, view)
@@ -235,7 +230,7 @@ function pan (params, camera, delta) {
   const unPanEnd = unproject([], panEnd, viewport, invProjView)
   // TODO scale by the correct near/far value instead of 1000 ?
   // const planesDiff = camera.far - camera.near
-  const offset = vec3.subtract([], unPanStart, unPanEnd).map(x => x * 1000 * camera.userControl.panSpeed * camera.scale)
+  const offset = vec3.subtract([], unPanStart, unPanEnd).map(x => x * 1000 * controls.userControl.panSpeed * controls.scale)
 
   return {
     position: vec3.add(vec3.create(), camera.position, offset),
@@ -246,16 +241,16 @@ function pan (params, camera, delta) {
 /**
   * compute camera state to 'fit' an object on screen
   * Note1: this is a non optimal but fast & easy implementation
-  * @param {Object} params the camera parameters
+  * @param {Object} controls the controls data/state
   * @param {Object} camera the camera data/state
   * @param {Object} entity an object containing a 'bounds' property for bounds information
   * @return {Object} the updated camera data/state
 */
-function zoomToFit (params, camera, entity) {
+function zoomToFit (controls, camera, entity) {
   // our camera.fov is already in radian, no need to convert
   const {fov, target, position} = camera
   const {bounds} = entity
-  const {zoomToFit} = Object.assign({}, params, controlsProps)
+  const {zoomToFit} = Object.assign({}, controls, controlsProps)
   const {tightness} = zoomToFit
   /*
     - x is scaleForIdealDistance
@@ -277,12 +272,12 @@ function zoomToFit (params, camera, entity) {
 /**
   * compute controls state to 'reset it' to the given state
   * Note1: this is a non optimal but fast & easy implementation
-  * @param {Object} params the camera parameters
+  * @param {Object} controls the controls data/state
   * @param {Object} camera the camera data/state
   * @param {Object} desiredState the state to reset the camera to: defaults to default values
   * @return {Object} the updated camera data/state
 */
-function reset (params, camera, desiredState) {
+function reset (controls, camera, desiredState) {
   return Object.assign({}, camera, {
     position: desiredState.position,
     target: desiredState.target,
@@ -297,7 +292,7 @@ function reset (params, camera, desiredState) {
 }
 
 // FIXME: upgrade or obsolete
-function setFocus (params, camera, focusPoint) {
+function setFocus (controls, camera, focusPoint) {
   const sub = (a, b) => a.map((a1, i) => a1 - b[i])
   const add = (a, b) => a.map((a1, i) => a1 + b[i]) // NOTE: NO typedArray.map support on old browsers, polyfilled
   const camTarget = camera.target

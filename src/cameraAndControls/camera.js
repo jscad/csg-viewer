@@ -16,11 +16,7 @@ const cameraState = {
   viewport: [0, 0, 0, 0]
 }
 
-const cameraDefaults = {
-
-}
-
-function createCamera (regl, props) {
+const cameraProps = {
 
 }
 
@@ -31,7 +27,8 @@ function setProjection (camera, input) {
   const projection = mat4.perspective([], camera.fov, aspect,
     camera.near,
     camera.far)
-  return {projection, aspect}
+  const viewport = [0, 0, input.width, input.height]
+  return {projection, aspect, viewport}
 }
 
-module.exports = {cameraState, setProjection}
+module.exports = {cameraState, cameraProps, setProjection}
