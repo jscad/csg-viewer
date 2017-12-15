@@ -2,16 +2,23 @@ const most = require('most')
 const {controlsProps, controlsState, update, rotate, zoom, pan, zoomToFit, reset} = require('./orbitControls')
 const {cameraProps, cameraState, setProjection} = require('./camera')
 
-let subscription
+function copyAssign (original, newData) {
+  // console.log('updated', newData.camera.view, original.camera.view)
+  const camera = Object.assign({}, original.camera, newData.camera)
+  const controls = Object.assign({}, original.controls, newData.controls)
+  return Object.assign({}, original, {camera, controls})
+}
 
 function prepareCameraAndControls (gestures, resize$, container, params, params$) {
-  console.log('baseParams', params)
   const _controlsState = Object.assign({}, controlsProps, controlsState, params.controls)
   const _cameraState = Object.assign({}, cameraProps, cameraState, params.camera)
-  console.log('initialzed controls state', _controlsState)
-  console.log('initialzed camera   state', _cameraState)
+  // console.log('initialzed controls state', _controlsState)
+  // console.log('initialzed camera   state', _cameraState)
 
   const initialState = Object.assign({}, {controls: _controlsState, camera: _cameraState})
+  console.log('initalsta', initialState.camera)
+  
+  let subscription
 
   // params$ = params$.skipRepeats()
   // .skipRepeats() perhaps use skipRepeatsWith */
@@ -63,6 +70,7 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
     gestures.taps.filter(taps => taps.nb === 3),
     onFirstStart$
   ])
+  .combine(params => params, params$)
   .multicast()
 
   const camcontrolsState$ = most.mergeArray([
@@ -75,19 +83,22 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
     params$.map(data => ({type: 'setFromParams', data}))
   ])
   .scan(function (state, action) {
-    console.log('SCAAAN', action)
+    //console.log('SCAAAN', action)
     const mutations = {
+      undefined: (state) => state, // no op
       resize: ({camera}, sizes) => ({camera: setProjection(camera, sizes)}),
-      rotate: ({controls, camera}, angles) => rotate(controls, camera, angles),
-      zoom: ({controls, camera}, zooms) => zoom(controls, camera, zooms),
-      pan: ({controls, camera}, delta) => pan(controls, camera, delta),
-      zoomToFit: ({controls, camera}) => zoomToFit(controls, camera),
-      reset: ({controls, camera}, params) => {
-        let resetState = reset(controls, camera, initialState)
+      rotate: (state, angles) => rotate(state, angles),
+      zoom: (state, zooms) => zoom(state, zooms),
+      pan: (state, delta) => pan(state, delta),
+      zoomToFit: (state) => zoomToFit(state),
+      reset: (state, params) => {
+        console.log('initalsta', initialState.camera)
+        let resetState = copyAssign(state, reset(state, initialState))
+        //resetState = copyAssign(resetState, update(resetState))
+        // resetState = nestedObjectAssign({}, resetState, update(resetState.controls, resetState.camera))
         // resetState = Object.assign({}, {camera, controls}, {camera: resetState.camera, controls: resetState.controls})
-        // then apply zoomToFIt 
-        return resetState
-        // return zoomToFit(resetState.controls, resetState.camera)
+        // then apply zoomToFIt
+        return resetState//zoomToFit(resetState.controls, resetState.camera)
       },
       setFromParams: ({controls, camera}, params) => {
         let result = {
@@ -101,21 +112,14 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
           result.controls.entity = params.entity
         }
         if (params && 'camera' in params) {
-          result.controls = params.camera
+          result.camera = params.camera
         }
         return result
       }
     }
-    const updatedData = mutations[action.type] !== undefined ? mutations[action.type](state, action.data) : state
-    let camera = updatedData.camera ? Object.assign({}, state.camera, updatedData.camera) : state.camera
-    let controls = updatedData.controls ? Object.assign({}, state.controls, updatedData.controls) : state.controls
-    let foo = update(controls, camera)
-    camera = Object.assign({}, camera, foo.camera)
-    controls = Object.assign({}, controls, foo.controls)
-    /*foo = zoomToFit(controls, camera, params.entity)
-    camera = Object.assign({}, camera, foo.camera)
-    controls = Object.assign({}, controls, foo.controls)*/
-    return Object.assign({}, state, { controls, camera })
+    const updatedData = copyAssign(state, mutations[action.type](state, action.data))
+    const newState = copyAssign(updatedData, update(updatedData))
+    return newState
   }, initialState)
   .combine((state, _params) => {
     return Object.assign({}, params, _params, state) // {camera, params}

@@ -62,17 +62,17 @@ const controlsState = {
   scale: 1
 }
 
-const defaultState = Object.assign({}, {controlsState, controlsProps})
+// const defaultState = Object.assign({}, {controlsState, controlsProps})
 
-function update (controlsState = defaultState, cameraState) {
+function update ({controls, camera}) {
   // custom z up is settable, with inverted Y and Z (since we use camera[2] => up)
-  const {EPS, drag} = controlsState
-  let {position, target, view} = cameraState
-  const up = controlsState.up ? controlsState.up : cameraState.up
+  const {EPS, drag} = controls
+  let {position, target} = camera
+  const up = controls.up ? controls.up : camera.up
 
-  let curThetaDelta = controlsState.thetaDelta
-  let curPhiDelta = controlsState.phiDelta
-  let curScale = controlsState.scale
+  let curThetaDelta = controls.thetaDelta
+  let curPhiDelta = controls.phiDelta
+  let curScale = controls.scale
 
   let offset = vec3.subtract([], position, target)
   let theta
@@ -93,8 +93,8 @@ function update (controlsState = defaultState, cameraState) {
   // curThetaDelta = -(curThetaDelta)
   }
 
-  if (controlsState.autoRotate.enabled && controlsState.userControl.rotate) {
-    curThetaDelta += 2 * Math.PI / 60 / 60 * controlsState.autoRotate.speed // arbitrary, kept for backwards compatibility
+  if (controls.autoRotate.enabled && controls.userControl.rotate) {
+    curThetaDelta += 2 * Math.PI / 60 / 60 * controls.autoRotate.speed // arbitrary, kept for backwards compatibility
   }
 
   theta += curThetaDelta
@@ -103,7 +103,7 @@ function update (controlsState = defaultState, cameraState) {
   // restrict phi to be betwee EPS and PI-EPS
   phi = max(EPS, min(PI - EPS, phi))
   // multiply by scaling effect and restrict radius to be between desired limits
-  const radius = max(controlsState.limits.minDistance, min(controlsState.limits.maxDistance, vec3.length(offset) * curScale))
+  const radius = max(controls.limits.minDistance, min(controls.limits.maxDistance, vec3.length(offset) * curScale))
 
   if (up[2] === 1) {
     offset[0] = radius * sin(phi) * sin(theta)
@@ -116,7 +116,7 @@ function update (controlsState = defaultState, cameraState) {
   }
 
   let newPosition = vec3.add(vec3.create(), target, offset)
-  let newView = mat4.lookAt(view, newPosition, target, up)
+  let newView = mat4.lookAt(mat4.create(), newPosition, target, up)
 
   const dragEffect = 1 - max(min(drag, 1.0), 0.01)
   const positionChanged = vec3.distance(position, newPosition) > 0 // TODO optimise
@@ -154,7 +154,7 @@ function update (controlsState = defaultState, cameraState) {
   * @param {Float} angle value of the angle to rotate
   * @return {Object} the updated camera data/state
 */
-function rotate (controls, camera, angle) {
+function rotate ({controls, camera}, angle) {
   const reductionFactor = 500
   let {
     thetaDelta,
@@ -166,10 +166,13 @@ function rotate (controls, camera, angle) {
     phiDelta += (angle[1] / reductionFactor)
   }
 
-  return {controls: {
-    thetaDelta,
-    phiDelta
-  }}
+  return {
+    controls: {
+      thetaDelta,
+      phiDelta
+    },
+    camera
+  }
 }
 
 /**
@@ -179,7 +182,7 @@ function rotate (controls, camera, angle) {
   * @param {Float} zoomDelta value of the zoom
   * @return {Object} the updated camera data/state
 */
-function zoom (controls, camera, zoomDelta = 0) {
+function zoom ({controls, camera}, zoomDelta = 0) {
   let {scale} = controls
 
   if (controls.userControl.zoom && camera && zoomDelta !== undefined && zoomDelta !== 0 && !isNaN(zoomDelta)) {
@@ -203,7 +206,7 @@ function zoom (controls, camera, zoomDelta = 0) {
       camera.near = Math.min(Math.max(5, distance * 0.0015), 100)
     } */
   }
-  return {controls: {scale}}
+  return {controls: {scale}, camera}
 }
 
 /**
@@ -213,7 +216,7 @@ function zoom (controls, camera, zoomDelta = 0) {
   * @param {Float} delta value of the raw pan delta
   * @return {Object} the updated camera data/state
 */
-function pan (controls, camera, delta) {
+function pan ({controls, camera}, delta) {
   const unproject = require('camera-unproject')
   const {projection, view, viewport} = camera
   const combinedProjView = mat4.multiply([], projection, view)
@@ -235,9 +238,11 @@ function pan (controls, camera, delta) {
   // const planesDiff = camera.far - camera.near
   const offset = vec3.subtract([], unPanStart, unPanEnd).map(x => x * 1000 * controls.userControl.panSpeed * controls.scale)
 
-  return {camera: {
-    position: vec3.add(vec3.create(), camera.position, offset),
-    target: vec3.add(vec3.create(), camera.target, offset)
+  return {
+    controls,
+    camera: {
+      position: vec3.add(vec3.create(), camera.position, offset),
+      target: vec3.add(vec3.create(), camera.target, offset)
   }}
 }
 
@@ -249,11 +254,11 @@ function pan (controls, camera, delta) {
   * @param {Object} entity an object containing a 'bounds' property for bounds information
   * @return {Object} the updated camera data/state
 */
-function zoomToFit (controls, camera) {
+function zoomToFit ({controls, camera}) {
   // our camera.fov is already in radian, no need to convert
   const {zoomToFit, entity} = controls
   if (zoomToFit.targets !== 'all' || entity === undefined || !entity.bounds) {
-    return {camera, controls}
+    return {controls, camera}
   }
   const {fov, target, position} = camera
   const {bounds} = controls.entity
@@ -283,31 +288,31 @@ function zoomToFit (controls, camera) {
   * @param {Object} desiredState the state to reset the camera to: defaults to default values
   * @return {Object} the updated camera data/state
 */
-function reset (controls, camera, desiredState) {
-  camera = Object.assign({}, camera, desiredState.camera)
+function reset ({controls, camera}, desiredState) {
+  /*camera = Object.assign({}, camera, desiredState.camera)
   camera.projection = mat4.perspective([], camera.fov, camera.aspect, camera.near, camera.far)
   controls = Object.assign({}, controls, desiredState.controls)
   return {
     camera,
     controls
-  }
-  /*return {
+  }*/
+  return {
     camera: {
-      position: desiredState.position,
-      target: desiredState.target,
+      position: desiredState.camera.position,
+      target: desiredState.camera.target,
       projection: mat4.perspective([], camera.fov, camera.aspect, camera.near, camera.far),
-      view: desiredState.view
+      view: desiredState.camera.view
     },
     controls: {
-      thetaDelta: desiredState.thetaDelta,
-      phiDelta: desiredState.phiDelta,
-      scale: desiredState.scale
+      thetaDelta: desiredState.controls.thetaDelta,
+      phiDelta: desiredState.controls.phiDelta,
+      scale: desiredState.controls.scale
     }
-  }*/
+  }
 }
 
 // FIXME: upgrade or obsolete
-function setFocus (controls, camera, focusPoint) {
+function setFocus ({controls, camera}, focusPoint) {
   const sub = (a, b) => a.map((a1, i) => a1 - b[i])
   const add = (a, b) => a.map((a1, i) => a1 + b[i]) // NOTE: NO typedArray.map support on old browsers, polyfilled
   const camTarget = camera.target
