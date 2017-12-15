@@ -124,15 +124,12 @@ const makeCsgViewer = function (container, options = {}) {
   // some others are 'one time use' and should be reset to default if the main function is called
   without setting them explictely ?
   */
-  // let prevParams = Object.assign({}, baseParams)
 
   /** main viewer function : call this one with different parameters and/or data to update the viewer
    * @param  {Object} options={}
    * @param  {Object} data
    */
   return function csgViewer (options = {}, data) {
-    // let params = Object.assign({}, prevParams, options)
-    // prevParams = params
     const params = options
 
     // setup data
