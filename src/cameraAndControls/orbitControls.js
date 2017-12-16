@@ -195,9 +195,13 @@ function zoom ({controls, camera}, zoomDelta = 0) {
     // updated distance after the scale has been updated, used to prevent going outside limits
     const newDistance = vec3.distance(camera.position, camera.target) * newScale
 
-    console.log('controls.limits.maxDistance',controls.limits.maxDistance)
+    console.log('controls.limits.maxDistance', controls.limits.maxDistance)
     if (newDistance > controls.limits.minDistance && newDistance < controls.limits.maxDistance) {
       scale += zoomDelta
+    }
+    // for ortho cameras
+    if (camera.zoom) {
+      camera = {zoom: scale}
     }
 
     /* if (controls.autoAdjustPlanes) {
@@ -243,7 +247,7 @@ function pan ({controls, camera}, delta) {
     camera: {
       position: vec3.add(vec3.create(), camera.position, offset),
       target: vec3.add(vec3.create(), camera.target, offset)
-  }}
+    }}
 }
 
 /**
@@ -295,7 +299,7 @@ function reset ({controls, camera}, desiredState) {
   return {
     camera,
     controls
-  }*/
+  } */
   return {
     camera: {
       position: desiredState.camera.position,

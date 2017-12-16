@@ -1,6 +1,6 @@
 const most = require('most')
 const {controlsProps, controlsState, update, rotate, zoom, pan, zoomToFit, reset} = require('./orbitControls')
-const {cameraProps, cameraState, setProjection} = require('./camera')
+const {cameraProps, cameraState, setProjection} = require('./perspectiveCamera')
 
 function copyAssign (original, newData) {
   // console.log('updated', newData.camera.view, original.camera.view)

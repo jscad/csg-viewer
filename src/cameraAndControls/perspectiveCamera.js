@@ -28,6 +28,7 @@ function setProjection (camera, input) {
     camera.near,
     camera.far)
   const viewport = [0, 0, input.width, input.height]
+
   return {projection, aspect, viewport}
 }
 
