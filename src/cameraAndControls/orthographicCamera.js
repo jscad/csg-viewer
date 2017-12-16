@@ -27,6 +27,7 @@ function setProjection (camera, input) {
   const aspect = width / height
   const viewport = [0, 0, width, height]
   const multiplier = camera.zoom
+  console.log('zoom', multiplier)
   const projection = mat4.ortho([],
     -width * multiplier, width * multiplier,
     -height * multiplier, height * multiplier, camera.near, camera.far)
