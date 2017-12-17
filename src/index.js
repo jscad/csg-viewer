@@ -5,23 +5,33 @@ const {holdSubject} = require('./observable-utils/most-subject/index')
 
 const prepareRender = require('./rendering/render')
 const prepareCameraAndControls = require('./cameraAndControls/cameraAndControls')
-const csgToGeometries = require('./geometry-utils/csgToGeometries')
 const computeBounds = require('./bound-utils/computeBounds')
 const areCSGsIdentical = require('./csg-utils/areCSGsIdentical')
 const nestedObjectAssign = require('nested-object-assign')
 
-function flatten (array) {
-  return [].concat(...array)
-}
-function toArray (data) {
-  if (data === undefined || data === null) { return [] }
-  if (data.constructor !== Array) { return [data] }
-  return data
+const csgToGeometries = require('./geometry-utils/csgToGeometries')
+const cagToGeometries = require('./geometry-utils/cagToGeometries')
+
+const {flatten, toArray} = require('./utils')
+
+const makeCameraActions = require('./cameraAndControls/actions')
+
+function deeperAssign (currentState, options) {
+  /*console.log('objects', objects)
+  object.keys(objects[1]).forEach((key)=>{
+    objects[0][key] = Object.assign({}, objects[1][key])
+  } */
+  let rootKeys = ['camera', 'controls', 'background', 'meshColor', 'grid', 'axes', 'lighting']
+  let output = {}
+  rootKeys.forEach(function (key) {
+    output[key] = Object.assign({}, currentState[key], options[key])
+  })
+  return output
+  // for(object.key())
 }
 
 const makeCsgViewer = function (container, options = {}) {
   const defaults = {
-    singleton: true,
     csgCheck: false,
     // after this , initial params of camera, controls & render
     camera: {
@@ -37,6 +47,7 @@ const makeCsgViewer = function (container, options = {}) {
         targets: 'all'
       }
     },
+    //
     background: [1, 1, 1, 1],
     meshColor: [1, 0.5, 0.5, 1],
     grid: {
@@ -46,6 +57,7 @@ const makeCsgViewer = function (container, options = {}) {
     axes: {
       show: true
     },
+    //
     lighting: {
       smooth: false
     }
@@ -53,7 +65,6 @@ const makeCsgViewer = function (container, options = {}) {
 
   let gestures
   let resizes$
-  let initialized = false
   let regl
   let cameraAndControls
 
@@ -65,27 +76,29 @@ const makeCsgViewer = function (container, options = {}) {
   // we keep the render function around, until we need to swap it out in case of new data
   let render
 
-  let baseParams = nestedObjectAssign({}, defaults, options)
+  let baseParams = deeperAssign(defaults, options)
+  let state = baseParams
 
   // we use an observable of parameters to play nicely with the other observables
   // note: subjects are anti patterns, but they simplify things here so ok for now
   const params$ = holdSubject()
-  const actions = {
-    setParams$: params$.map(data => ({type: 'setParams', data}))
-  }
-  //const paramsState$ = 
-  console.log('baseParams', baseParams, options)
-  if (!baseParams.singleton || (baseParams.singleton && !initialized)) {
-    // initialize when container changes
-    regl = require('regl')(container)
-    // setup interactions, change when container changes
-    gestures = pointerGestures(container)
-    resizes$ = require('./cameraAndControls/elementSizing')(container)
-    cameraAndControls = prepareCameraAndControls(gestures, resizes$, container, baseParams, params$)
-  }
-  if (baseParams.singleton) {
-    initialized = true
-  }
+
+  console.log('baseParams/originalState', baseParams)//, options)
+  // initialize when container changes
+  regl = require('regl')(container)
+  // setup interactions, change when container changes
+  gestures = pointerGestures(container)
+  resizes$ = require('./cameraAndControls/elementSizing')(container)
+
+  const cameraActions = makeCameraActions({gestures, resizes$, params$})
+  cameraAndControls = prepareCameraAndControls(cameraActions, baseParams)
+  cameraAndControls.map(({camera, controls}) => {
+    return Object.assign({}, state, {camera, controls})
+  })
+  .forEach(function (state) {
+    console.log('updated state', state)
+    render(state)
+  })
 
  /* const setParams$ = params$.map(x => ({action: 'setParams', value: x}))
   const drags$ = gestures.drags.map(x => ({action: 'drag', value: x}))
@@ -131,7 +144,7 @@ const makeCsgViewer = function (container, options = {}) {
    */
   return function csgViewer (options = {}, data) {
     const params = options
-
+    state = deeperAssign(state, options)
     // setup data
     // warning !!! fixTJunctions alters the csg and can result in visual issues ??
     if (data && data.csg) {
@@ -140,7 +153,13 @@ const makeCsgViewer = function (container, options = {}) {
       if (!params.csgCheck || !areCSGsIdentical(csg, cachedCsg)) {
         cachedCsg = csg
         const start = performance.now()
-        const geometries = csgToGeometries(csg, {smoothLighting: baseParams.lighting.smooth})//, normalThreshold: 0})
+        let geometries
+        if ('sides' in csg) {
+          geometries = cagToGeometries(csg, {})
+        } else {
+          geometries = csgToGeometries(csg, {smoothLighting: baseParams.lighting.smooth})//, normalThreshold: 0})
+        }
+
         geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays as inputs
         geometry = geometry[0]
         const time = (performance.now() - start) / 1000
@@ -154,7 +173,7 @@ const makeCsgViewer = function (container, options = {}) {
       render = prepareRender(regl, Object.assign({}, params, {geometry, bounds}))
     }
 
-    cameraAndControls(render)
+    // cameraAndControls(render)
     // FIXME: hack for now, normally there would be an array of entities
     params.entity = entity
     console.log('in index', params)

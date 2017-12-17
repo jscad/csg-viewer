@@ -181,7 +181,8 @@ const drawMesh = function (regl, params = {extras: {}}) {
         src: 'src alpha',
         dst: 'one minus src alpha'
       }
-    }
+    },
+    primitive: (context, props) => props && props.primitive ? props.primitive : 'triangles' //'lines'
   }
 
   if (geometry.cells) {

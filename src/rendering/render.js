@@ -45,6 +45,7 @@ const prepareRender = (regl, params) => {
       // drawTest({color: [1, 0, 0, 1], model: mat4.translate(mat4.create(), mat4.identity([]), [100, 0, 200])})
       if (props.grid.show) {
         drawGrid({color: props.grid.color})
+        // console.log('gridColor', props.grid.color, props)
       }
       if (props.axes.show){
         drawAxis() // needs to be last to be 'on top' of the scene

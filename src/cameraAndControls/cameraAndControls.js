@@ -9,79 +9,15 @@ function copyAssign (original, newData) {
   return Object.assign({}, original, {camera, controls})
 }
 
-function prepareCameraAndControls (gestures, resize$, container, params, params$) {
+function prepareCameraAndControls (actions, params) {
   const _controlsState = Object.assign({}, controlsProps, controlsState, params.controls)
   const _cameraState = Object.assign({}, cameraProps, cameraState, params.camera)
   // console.log('initialzed controls state', _controlsState)
   // console.log('initialzed camera   state', _cameraState)
 
   const initialState = Object.assign({}, {controls: _controlsState, camera: _cameraState})
-  console.log('initalsta', initialState.camera)
-  
-  let subscription
 
-  // params$ = params$.skipRepeats()
-  // .skipRepeats() perhaps use skipRepeatsWith */
-
-  let rotations$ = gestures.drags
-    .filter(x => x !== undefined) // TODO: add this at gestures.drags level
-    .map(function (data) {
-      let delta = [data.delta.x, data.delta.y]
-      const {shiftKey} = data.originalEvents[0]
-      if (!shiftKey) {
-        return delta
-      }
-      return undefined
-    })
-    .filter(x => x !== undefined)
-    .map(delta => delta.map(d => d * -Math.PI))
-    .multicast()
-
-  let pan$ = gestures.drags
-    .filter(x => x !== undefined) // TODO: add this at gestures.drags level
-    .map(function (data) {
-      const delta = [data.delta.x, data.delta.y]
-      const {shiftKey} = data.originalEvents[0]
-      if (shiftKey) {
-        return delta
-      }
-      return undefined
-    })
-    .filter(x => x !== undefined)
-    .multicast()
-
-  let zoom$ = gestures.zooms
-    .startWith(0) // TODO: add this at gestures.zooms level
-    .map(x => -x) // we invert zoom direction
-    .filter(x => !isNaN(x)) // TODO: add this at gestures.zooms level
-    .multicast()
-    .skip(1)
-
-  // Reset view with a double tap
-  let reset$ = gestures.taps
-    .filter(taps => taps.nb === 2)
-    .sample(params => params, params$)
-    .multicast()
-
-  const onFirstStart$ = resize$.take(1).multicast() // there is an initial resize event, that we reuse
-
-  // zoomToFit main mesh bounds
-  const zoomToFit$ = most.mergeArray([
-    gestures.taps.filter(taps => taps.nb === 3),
-    onFirstStart$
-  ])
-  .combine(params => params, params$)
-  .multicast()
-
-  const camcontrolsState$ = most.mergeArray([
-    resize$.map(data => ({type: 'resize', data})),
-    rotations$.map(data => ({type: 'rotate', data})),
-    pan$.map(data => ({type: 'pan', data})),
-    zoom$.map(data => ({type: 'zoom', data})),
-    zoomToFit$.map(data => ({type: 'zoomToFit', data})),
-    reset$.map(data => ({type: 'reset', data})),
-    params$.map(data => ({type: 'setFromParams', data}))
-  ])
+  const camcontrolsState$ = most.mergeArray(actions)
   .scan(function (state, action) {
     //console.log('SCAAAN', action)
     const mutations = {
@@ -121,19 +57,7 @@ function prepareCameraAndControls (gestures, resize$, container, params, params$
     const newState = copyAssign(updatedData, update(updatedData))
     return newState
   }, initialState)
-  .combine((state, _params) => {
-    return Object.assign({}, params, _params, state) // {camera, params}
-  }, params$)
-  .multicast()
-
-  // we use a subscription to be able to unsubscribe in case the viewer needs to be recreated
-  return (render) => {
-    if (subscription) {
-      subscription.unsubscribe()
-    }
-    subscription = camcontrolsState$// merged$
-      .subscribe({next: render})
-  }
+  return camcontrolsState$
 }
 
 module.exports = prepareCameraAndControls
