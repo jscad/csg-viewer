@@ -7,7 +7,6 @@ const prepareRender = require('./rendering/render')
 const prepareCameraAndControls = require('./cameraAndControls/cameraAndControls')
 const computeBounds = require('./bound-utils/computeBounds')
 const areCSGsIdentical = require('./csg-utils/areCSGsIdentical')
-const nestedObjectAssign = require('nested-object-assign')
 
 const csgToGeometries = require('./geometry-utils/csgToGeometries')
 const cagToGeometries = require('./geometry-utils/cagToGeometries')
@@ -17,7 +16,7 @@ const {flatten, toArray} = require('./utils')
 const makeCameraActions = require('./cameraAndControls/actions')
 
 function deeperAssign (currentState, options) {
-  /*console.log('objects', objects)
+  /* console.log('objects', objects)
   object.keys(objects[1]).forEach((key)=>{
     objects[0][key] = Object.assign({}, objects[1][key])
   } */
@@ -34,19 +33,8 @@ const makeCsgViewer = function (container, options = {}) {
   const defaults = {
     csgCheck: false,
     // after this , initial params of camera, controls & render
-    camera: {
-      position: [150, 250, 200],
-      far: 18000
-    },
-    controls: {
-      limits: {
-        maxDistance: 16000,
-        minDistance: 0.01
-      },
-      zoomToFit: {
-        targets: 'all'
-      }
-    },
+    camera: require('./cameraAndControls/perspectiveCamera').defaults,
+    controls: require('./cameraAndControls/orbitControls').defaults,
     //
     background: [1, 1, 1, 1],
     meshColor: [1, 0.5, 0.5, 1],
@@ -99,23 +87,6 @@ const makeCsgViewer = function (container, options = {}) {
     console.log('updated state', state)
     render(state)
   })
-
- /* const setParams$ = params$.map(x => ({action: 'setParams', value: x}))
-  const drags$ = gestures.drags.map(x => ({action: 'drag', value: x}))
-
-  const camcontrolsState$ = most.mergeArray([setParams$, drags$])
-    .scan(function (state, action) {
-      return state
-    }, Object.assign({}, baseParams.camera, baseParams.controls))
-
-  const otherState$ = most.just({foo: 42}).multicast()
-
-  // const viewerState$ =
-  most.combineArray(function (...[camera, other]) {
-    console.log('here', camera, other)
-    return {camera, other}
-  }, [camcontrolsState$, otherState$])
-  .forEach(x => console.log('viewerState', x)) */
 
   /*
   // some params become state and NEED to be passed to the render function

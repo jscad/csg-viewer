@@ -5,11 +5,11 @@ const cameraState = {
   projection: mat4.identity(new Float32Array(16)),
   matrix: mat4.identity(new Float32Array(16)), // not sure if needed
   near: 1, // 0.01,
-  far: 1300,
+  far: 18000,
   up: [0, 0, 1],
   // distance: 10.0, // not sure if needed
   eye: new Float32Array(3), // same as position
-  position: [150, 250, 200],
+  position: [450, 550, 700],
   target: [0, 0, 0],
   fov: Math.PI / 4,
   aspect: 1,
@@ -17,8 +17,9 @@ const cameraState = {
 }
 
 const cameraProps = {
-
 }
+
+const defaults = Object.assign({}, cameraState, cameraProps)
 
 function setProjection (camera, input) {
   // context.viewportWidth / context.viewportHeight,
@@ -32,4 +33,4 @@ function setProjection (camera, input) {
   return {projection, aspect, viewport}
 }
 
-module.exports = {cameraState, cameraProps, setProjection}
+module.exports = {cameraState, cameraProps, defaults, setProjection}

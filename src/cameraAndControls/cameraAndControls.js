@@ -1,6 +1,6 @@
 const most = require('most')
-const {controlsProps, controlsState, update, rotate, zoom, pan, zoomToFit, reset} = require('./orbitControls')
-const {cameraProps, cameraState, setProjection} = require('./perspectiveCamera')
+const {controlsProps, update, rotate, zoom, pan, zoomToFit, reset} = require('./orbitControls')
+const {setProjection} = require('./perspectiveCamera')
 
 function copyAssign (original, newData) {
   // console.log('updated', newData.camera.view, original.camera.view)
@@ -9,18 +9,11 @@ function copyAssign (original, newData) {
   return Object.assign({}, original, {camera, controls})
 }
 
-function prepareCameraAndControls (actions, params) {
-  const _controlsState = Object.assign({}, controlsProps, controlsState, params.controls)
-  const _cameraState = Object.assign({}, cameraProps, cameraState, params.camera)
-  // console.log('initialzed controls state', _controlsState)
-  // console.log('initialzed camera   state', _cameraState)
-
-  const initialState = Object.assign({}, {controls: _controlsState, camera: _cameraState})
-
+function prepareCameraAndControls (actions, initialState) {
   const camcontrolsState$ = most.mergeArray(actions)
   .scan(function (state, action) {
     //console.log('SCAAAN', action)
-    const mutations = {
+    const reducers = {
       undefined: (state) => state, // no op
       resize: ({camera}, sizes) => ({camera: setProjection(camera, sizes)}),
       rotate: (state, angles) => rotate(state, angles),
@@ -53,7 +46,7 @@ function prepareCameraAndControls (actions, params) {
         return result
       }
     }
-    const updatedData = copyAssign(state, mutations[action.type](state, action.data))
+    const updatedData = copyAssign(state, reducers[action.type](state, action.data))
     const newState = copyAssign(updatedData, update(updatedData))
     return newState
   }, initialState)

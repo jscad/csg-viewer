@@ -29,8 +29,8 @@ rotate => modify the angle input
 
 const controlsProps = {
   limits: {
-    minDistance: 30,
-    maxDistance: 800
+    minDistance: 0.01,
+    maxDistance: 10000
   },
   drag: 0.27, // Decrease the momentum by 1% each iteration
   EPS: 0.000001,
@@ -62,7 +62,7 @@ const controlsState = {
   scale: 1
 }
 
-// const defaultState = Object.assign({}, {controlsState, controlsProps})
+const defaults = Object.assign({}, controlsState, controlsProps)
 
 function update ({controls, camera}) {
   // custom z up is settable, with inverted Y and Z (since we use camera[2] => up)
@@ -346,6 +346,7 @@ function setFocus ({controls, camera}, focusPoint) {
 module.exports = {
   controlsProps,
   controlsState,
+  defaults,
   update,
   rotate,
   zoom,

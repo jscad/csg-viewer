@@ -15,6 +15,7 @@ function actions (sources) {
   })
   .filter(x => x !== undefined)
   .map(delta => delta.map(d => d * -Math.PI))
+  .map(data => ({type: 'rotate', data}))
   .multicast()
 
   let pan$ = gestures.drags
@@ -28,19 +29,22 @@ function actions (sources) {
     return undefined
   })
   .filter(x => x !== undefined)
+  .map(data => ({type: 'pan', data}))
   .multicast()
 
   let zoom$ = gestures.zooms
   .startWith(0) // TODO: add this at gestures.zooms level
   .map(x => -x) // we invert zoom direction
   .filter(x => !isNaN(x)) // TODO: add this at gestures.zooms level
-  .multicast()
   .skip(1)
+  .map(data => ({type: 'zoom', data}))
+  .multicast()
 
 // Reset view with a double tap
   let reset$ = gestures.taps
   .filter(taps => taps.nb === 2)
   .sample(params => params, params$)
+  .map(data => ({type: 'reset', data}))
   .multicast()
 
   const onFirstStart$ = resizes$.take(1).multicast() // there is an initial resize event, that we reuse
@@ -51,14 +55,15 @@ function actions (sources) {
     onFirstStart$
   ])
   .combine(params => params, params$)
+  .map(data => ({type: 'zoomToFit', data}))
   .multicast()
 
   return [
-    rotations$.map(data => ({type: 'rotate', data})),
-    pan$.map(data => ({type: 'pan', data})),
-    zoom$.map(data => ({type: 'zoom', data})),
-    reset$.map(data => ({type: 'reset', data})),
-    zoomToFit$.map(data => ({type: 'zoomToFit', data})),
+    rotations$,
+    pan$,
+    zoom$,
+    reset$,
+    zoomToFit$,
     resizes$.map(data => ({type: 'resize', data})),
     params$.map(data => ({type: 'setFromParams', data}))
   ]
