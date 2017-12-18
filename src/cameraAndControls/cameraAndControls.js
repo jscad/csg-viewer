@@ -1,5 +1,5 @@
 const most = require('most')
-const {controlsProps, update, rotate, zoom, pan, zoomToFit, reset} = require('./orbitControls')
+const {update, rotate, zoom, pan, zoomToFit, reset} = require('./orbitControls')
 const {setProjection} = require('./perspectiveCamera')
 
 function copyAssign (original, newData) {

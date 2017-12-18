@@ -8,7 +8,6 @@ const makeDrawNormals = require('./drawNormals')
 
 const prepareRender = (regl, params) => {
   const {entities} = params
-  console.log('prepare render', params)
   const drawCSGs = entities
     .map(e => makeDrawMesh(regl, {geometry: e.geometry}))
   // const drawGrid = prepDrawGrid(regl, {fadeOut: true, ticks: 10, size: [1000, 1000]})
