@@ -56,11 +56,9 @@ const makeCsgViewer = function (container, options = {}) {
   let regl
   let cameraAndControls
 
-  let cachedCsg
-  // hack for now: the inner representation of the CSG's geometry + meta (bounds etc)
-  let geometry
-  let bounds
-  let entity
+  let cachedSolids
+  // inner representation of the CSG's geometry + meta (bounds etc)
+  let entities
   // we keep the render function around, until we need to swap it out in case of new data
   let render
 
@@ -119,34 +117,43 @@ const makeCsgViewer = function (container, options = {}) {
     // setup data
     // warning !!! fixTJunctions alters the csg and can result in visual issues ??
     if (data && data.csg) {
-      const csg = union(toArray(data.csg)) // FXIME : ACTUALLY deal with arrays as inputs
+      const solids = toArray(data.csg)
+      console.log('solids', solids)
       // .fixTJunctions()
-      if (!params.csgCheck || !areCSGsIdentical(csg, cachedCsg)) {
-        cachedCsg = csg
-        const start = performance.now()
-        let geometries
-        if ('sides' in csg) {
-          geometries = cagToGeometries(csg, {})
-        } else {
-          geometries = csgToGeometries(csg, {smoothLighting: baseParams.lighting.smooth})//, normalThreshold: 0})
-        }
+      if (!params.csgCheck) { // || !areCSGsIdentical(csg, cachedSolids)) {
+        cachedSolids = solids
+        // const start = performance.now()
 
-        geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays as inputs
-        geometry = geometry[0]
-        const time = (performance.now() - start) / 1000
-        // console.log(`Total time for geometry conversion: ${time} s`)
-        // console.log('geometry', geometry)
-        bounds = computeBounds({geometry: geometry})// FXIME : ACTUALLY deal with arrays as inputs
+        entities = solids.map(function (solid) {
+          console.log('solid', solid)
+          let geometry
+          let type
+          if ('sides' in solid) {
+            type = '2d'
+            geometry = cagToGeometries(solid, {})
+          } else {
+            type = '3d'
+            geometry = csgToGeometries(solid, {smoothLighting: baseParams.lighting.smooth})//, normalThreshold: 0})
+          }
+          // geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays as inputs
+          geometry = flatten(geometry)[0]// [0][0]
+          // const time = (performance.now() - start) / 1000
+          // console.log(`Total time for geometry conversion: ${time} s`)
+          // console.log('geometry', geometry)
+          const bounds = computeBounds({geometry})// FXIME : ACTUALLY deal with arrays as inputs
+          // reuse
+          const entity = {geometry, bounds, type}
+          return entity
+        })
       }
-      // reuse
-      entity = {geometry, bounds}
+
       // create a render function, with updated data
-      render = prepareRender(regl, Object.assign({}, params, {geometry, bounds}))
+      render = prepareRender(regl, Object.assign({}, params, {entities}))
     }
 
     // cameraAndControls(render)
     // FIXME: hack for now, normally there would be an array of entities
-    params.entity = entity
+    params.entities = entities
     console.log('in index', params)
     params$.next(params)
 

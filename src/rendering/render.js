@@ -7,8 +7,10 @@ const makeDrawAxis = require('./drawAxis')
 const makeDrawNormals = require('./drawNormals')
 
 const prepareRender = (regl, params) => {
-  const {geometry} = params
-  const drawCSG = makeDrawMesh(regl, {geometry})
+  const {entities} = params
+  console.log('prepare render', params)
+  const drawCSGs = entities
+    .map(e => makeDrawMesh(regl, {geometry: e.geometry}))
   // const drawGrid = prepDrawGrid(regl, {fadeOut: true, ticks: 10, size: [1000, 1000]})
   // const drawNormals = makeDrawNormals(regl, {geometry})
   /* const vectorizeText = require('vectorize-text')
@@ -33,7 +35,7 @@ const prepareRender = (regl, params) => {
   const drawGrid = makeDrawGrid(regl, {size: [1800, 1800], ticks: 10})
 
   let command = (props) => {
-    //console.log('params in render', props)
+    // console.log('params in render', props)
     const {meshColor, background} = props
 
     renderWrapper(regl)(props, context => {
@@ -41,16 +43,19 @@ const prepareRender = (regl, params) => {
         color: background,
         depth: 1
       })
-      drawCSG({color: meshColor})
+      drawCSGs.forEach((drawCSG, index) => {
+        const primitive = entities[index].type === '2d' ? 'lines' : 'triangles'
+        drawCSG({color: meshColor, primitive})
+      })
       // drawTest({color: [1, 0, 0, 1], model: mat4.translate(mat4.create(), mat4.identity([]), [100, 0, 200])})
       if (props.grid.show) {
         drawGrid({color: props.grid.color})
         // console.log('gridColor', props.grid.color, props)
       }
-      if (props.axes.show){
+      if (props.axes.show) {
         drawAxis() // needs to be last to be 'on top' of the scene
       }
-      
+
       // drawNormals()
     })
   }
