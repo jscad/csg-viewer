@@ -1,5 +1,5 @@
-const {update, rotate, zoom, pan, zoomToFit, reset} = require('./orbitControls')
-const {setProjection} = require('./perspectiveCamera')
+const {update, rotate, zoom, pan, zoomToFit, reset} = require('./cameraAndControls/orbitControls')
+const {setProjection} = require('./cameraAndControls/perspectiveCamera')
 
 function copyAssign (original, newData) {
   // console.log('updated', newData.camera.view, original.camera.view)
@@ -26,7 +26,8 @@ function makeReducers (initialState) {
     pan: (state, delta) => {
       return copyAssign(state, pan(state, delta))
     },
-    zoomToFit: (state) => {
+    zoomToFit: (state, when) => {
+      console.log('zoomToFIt', when)
       return copyAssign(state, zoomToFit(state))
     },
     reset: (state, params) => {

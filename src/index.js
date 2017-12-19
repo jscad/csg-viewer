@@ -1,8 +1,8 @@
 const {pointerGestures} = require('most-gestures')
 const {holdSubject} = require('./observable-utils/most-subject/index')
 // require('most-subject')github:briancavalier/most-subject : issues with webpack hence the above
-const makeCameraActions = require('./cameraAndControls/actions')
-const makeActions = require('./actions')
+const makeCameraControlsActions = require('./cameraControlsActions')
+const makeDataParamsActions = require('./dataParamsActions')
 const makeState = require('./state')
 const {deeperAssign} = require('./utils')
 const most = require('most')
@@ -48,9 +48,9 @@ const makeCsgViewer = function (container, options = {}) {
   state.render = prepareRender(regl, state)
 
   const sources$ = {gestures, resizes$, params$, data$}
-  const cameraActions = makeCameraActions(sources$)
-  const dataActions = makeActions(sources$)
-  const actions = most.mergeArray(dataActions.concat(cameraActions))
+  const cameraControlsActions = makeCameraControlsActions(sources$)
+  const dataParamsActions = makeDataParamsActions(sources$)
+  const actions = most.mergeArray(dataParamsActions.concat(cameraControlsActions))
   const dataState$ = makeState(actions, state, regl)
 
   // re-render whenever state changes, since visuals are a function of the state

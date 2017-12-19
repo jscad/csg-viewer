@@ -1,6 +1,6 @@
 const most = require('most')
-const {rafStream} = require('../observable-utils/rafStream')
-const limitFlow = require('../observable-utils/limitFlow')
+const {rafStream} = require('./observable-utils/rafStream')
+const limitFlow = require('./observable-utils/limitFlow')
 
 function actions (sources) {
   const {gestures, resizes$, params$, data$} = sources
@@ -53,11 +53,13 @@ function actions (sources) {
 
 // zoomToFit main mesh bounds
   const zoomToFit$ = most.mergeArray([
-    gestures.taps.filter(taps => taps.nb === 3),
+    gestures.taps.filter(taps => taps.nb === 3)
+      .map(_ => ({type: 'zoomToFit', data: {when: 'demand'}})),
     onFirstStart$
+      .map(_ => ({type: 'zoomToFit', data: {origin: 'start'}})),
+    data$
+      .map(_ =>({type: 'zoomToFit', data: {origin: 'new-data'}}))
   ])
-  .combine(data => data, data$)
-  .map(data => ({type: 'zoomToFit', data}))
   .multicast()
 
   const update$ = rafStream()
