@@ -17,7 +17,7 @@ function makeState (actions, initialState, regl) {
       // console.log('SCAAAN', action, newState)
       return newState
     }, initialState)
-    .filter(x => x !== undefined) // WTF !! the supposed inital value of the scan is fired AFTER the others ???
+    .filter(x => x !== undefined)// just in case ...
     .multicast()
 
   return state$
