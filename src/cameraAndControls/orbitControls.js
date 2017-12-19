@@ -94,7 +94,8 @@ function update ({controls, camera}) {
   }
 
   if (controls.autoRotate.enabled && controls.userControl.rotate) {
-    curThetaDelta += 2 * Math.PI / 60 / 60 * controls.autoRotate.speed // arbitrary, kept for backwards compatibility
+    // console.log('fooo')
+    curThetaDelta += 2 * Math.PI / 60 / 60 * 2.0//controls.autoRotate.speed // arbitrary, kept for backwards compatibility
   }
 
   theta += curThetaDelta
@@ -195,7 +196,6 @@ function zoom ({controls, camera}, zoomDelta = 0) {
     // updated distance after the scale has been updated, used to prevent going outside limits
     const newDistance = vec3.distance(camera.position, camera.target) * newScale
 
-    console.log('controls.limits.maxDistance', controls.limits.maxDistance, zoomDelta)
     if (newDistance > controls.limits.minDistance && newDistance < controls.limits.maxDistance) {
       scale += zoomDelta
     }
