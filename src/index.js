@@ -39,15 +39,17 @@ const makeCsgViewer = function (container, options = {}) {
 
   // initialize when container changes
   const regl = require('regl')(container)
-  // setup interactions, change when container changes
-  const gestures = pointerGestures(container)
-  const resizes$ = require('./cameraAndControls/elementSizing')(container)
 
   let state = deeperAssign(defaults, options)
   // note we keep the render function around, until we need to swap it out in case of new data
   state.render = prepareRender(regl, state)
 
-  const sources$ = {gestures, resizes$, params$, data$}
+  const sources$ = {
+    gestures: pointerGestures(container),
+    resizes$: require('./cameraAndControls/elementSizing')(container),
+    params$: params$.filter(x => x !== undefined), // we filter out pointless data from the get go
+    data$: data$.filter(x => x !== undefined)// we filter out pointless data from the get go
+  }
   const cameraControlsActions = makeCameraControlsActions(sources$)
   const dataParamsActions = makeDataParamsActions(sources$)
   const actions = most.mergeArray(dataParamsActions.concat(cameraControlsActions))
