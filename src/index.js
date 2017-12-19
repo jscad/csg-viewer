@@ -10,13 +10,15 @@ const prepareRender = require('./rendering/render')
 
 const makeCsgViewer = function (container, options = {}) {
   const defaults = {
-    csgCheck: false,
+    csgCheck: false, // not used currently !
+    overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
     // after this , initial params of camera, controls & render
     camera: require('./cameraAndControls/perspectiveCamera').defaults,
     controls: require('./cameraAndControls/orbitControls').defaults,
     //
     background: [1, 1, 1, 1],
-    meshColor: [1, 0.5, 0.5, 1],
+    meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags 
+    conversionColor: undefined, // for csg/cag conversion
     grid: {
       show: false,
       color: [1, 1, 1, 1]

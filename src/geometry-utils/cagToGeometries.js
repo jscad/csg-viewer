@@ -2,9 +2,14 @@
 const {flatten, toArray} = require('../utils')
 
 function cagToGeometries (cags, options) {
+  const defaults = {
+    color: [1, 0.4, 0, 1]// default color
+  }
+  const {color} = Object.assign({}, defaults, options)
+
   let points = cagToPointsArray(cags).map(x => [x[0], x[1], 0])
   let normals = points.map(x => [0, 0, -1])
-  let colors = points.map(x => [0, 0, 0, 1])
+  let colors = points.map(x => color)
   return [
     {
     // indices,

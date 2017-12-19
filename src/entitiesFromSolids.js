@@ -16,10 +16,10 @@ function entitiesFromSolids (baseParams, solids) {
     let type
     if ('sides' in solid) {
       type = '2d'
-      geometry = cagToGeometries(solid, {})
+      geometry = cagToGeometries(solid, {color: baseParams.meshColor})
     } else {
       type = '3d'
-      geometry = csgToGeometries(solid, {smoothLighting: baseParams.lighting.smooth})//, normalThreshold: 0})
+      geometry = csgToGeometries(solid, {smoothLighting: baseParams.lighting.smooth, faceColor: baseParams.meshColor})//, normalThreshold: 0})
     }
     // geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays since a single csg can
     // generate multiple geometries if positions count is >65535

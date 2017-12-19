@@ -15,10 +15,10 @@ function csgToGeometries (csgs, options) {
   const defaults = {
     smoothLighting: false, // set to true if we want to use interpolated vertex normals this creates nice round spheres but does not represent the shape of the actual model
     normalThreshold: 0.349066, // 20 deg
-    faceColor: '#ff6600'// default color
+    faceColor: [1, 0.4, 0, 1]// default color
   }
   const {smoothLighting, normalThreshold, faceColor} = Object.assign({}, defaults, options)
-  const faceColorRgb = hexToRgbNormalized(faceColor) // TODO : detect if hex or rgba
+  const faceColorRgb = faceColor === undefined ? undefined : normalizedColor(faceColor) // TODO : detect if hex or rgba
 
   csgs = toArray(csgs)
   const geometriesPerCsg = csgs.map(convert)
@@ -71,7 +71,9 @@ function csgToGeometries (csgs, options) {
             index = tupplesIndex
             // normalPositionLookup.push(candidateTupple)
             // index = normalPositionLookup.length - 1
-            colors.push(color)
+            if (faceColor !== undefined) {
+              colors.push(color)
+            }
             normals.push(normal)
             positions.push(position)
             tupplesIndex += 1
@@ -79,7 +81,9 @@ function csgToGeometries (csgs, options) {
             index = existingTupple.index
           }
         } else {
-          colors.push(color)
+          if (faceColor !== undefined) {
+            colors.push(color)
+          }
           normals.push(normal)
           positions.push(position)
           index = positions.length - 1
@@ -95,12 +99,21 @@ function csgToGeometries (csgs, options) {
 
       // if too many vertices or we are at the end, start a new geometry
       if (positions.length > 65000 || i === polygons.length - 1) {
-        geometries.push({
-          indices,
-          positions,
-          normals,
-          colors
-        })
+        // special case to deal with face color SPECICIALLY SET TO UNDEFINED
+        if (faceColor === undefined) {
+          geometries.push({
+            indices,
+            positions,
+            normals
+          })
+        } else {
+          geometries.push({
+            indices,
+            positions,
+            normals,
+            colors
+          })
+        }
       }
     }
     return geometries
@@ -131,6 +144,16 @@ function colorBytes (colorRGBA) {
   if (colorRGBA.a !== undefined) result.push(colorRGBA.a)
   return result
 }
+/** determine if input is a hex (color) or not
+ * @param  {Object} object a string, array, object , whatever
+ * @returns {Boolean} wether the input is a hex string or not
+ */
+function isHexColor (object) {
+  if (typeof sNum !== 'string') {
+    return false
+  }
+  return /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(object)
+}
 
 // modified from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba
 function hexToRgbNormalized (hex, alpha) {
@@ -138,7 +161,22 @@ function hexToRgbNormalized (hex, alpha) {
   const r = parseInt(hex.length === 3 ? hex.slice(0, 1).repeat(2) : hex.slice(0, 2), 16)
   const g = parseInt(hex.length === 3 ? hex.slice(1, 2).repeat(2) : hex.slice(2, 4), 16)
   const b = parseInt(hex.length === 3 ? hex.slice(2, 3).repeat(2) : hex.slice(4, 6), 16)
-  return (alpha ? [r, g, b, alpha] : [r, g, b]).map(x => x / 255)
+  return (alpha ? [r, g, b, alpha] : [r, g, b, 255]).map(x => x / 255)
+}
+
+/** outputs a normalized [0...1] range, 4 component array color
+ * @param  {} input
+ */
+function normalizedColor (input) {
+  if (isHexColor(input)) {
+    return hexToRgbNormalized(input)
+  } else if (Array.isArray(input) && input.length >= 3) {
+    input = input.length < 4 ? [input[0], input[1], input[2], 1] : input.slice(0, 4)
+    if (input[0] > 1 || input[1] > 1 || input[2] > 1) {
+      return input.map(x => x / 255)
+    }
+    return input
+  }
 }
 
 /**
@@ -148,7 +186,7 @@ function hexToRgbNormalized (hex, alpha) {
  * @returns {Array}  `[r, g, b, a]`
  */
 function polygonColor (polygon, faceColor) {
-  let color = faceColor// colorBytes(faceColor)
+  let color = faceColor
 
   if (polygon.shared && polygon.shared.color) {
     color = polygon.shared.color
@@ -156,7 +194,7 @@ function polygonColor (polygon, faceColor) {
     color = polygon.color
   }
   // opaque is default
-  if (color.length < 4) {
+  if (color !== undefined && color.length < 4) {
     color.push(1.0)
   }
   return color
@@ -185,26 +223,11 @@ function fuzyNormalAndPositionLookup (normalPositionLookup, toCompare, normalThr
       const similarNormal = areNormalsSimilar(normal, toCompare.normal, normalThreshold)
       const similar = similarNormal
       if (similar) {
-        return {tupple: {position: toCompare.position, normal}, index:normalsCandidates[i].index}
+        return {tupple: {position: toCompare.position, normal}, index: normalsCandidates[i].index}
       }
     }
   }
   return undefined
-  /*
-  for (let i = 0; i < normalPositionLookup.length; i++) {
-    const tupple = normalPositionLookup[i]
-    const similarNormal = areNormalsSimilar(tupple.normal, toCompare.normal, normalThreshold)
-    const similarPosition = (
-      tupple.position[0] === toCompare.position[0] &&
-      tupple.position[1] === toCompare.position[1] &&
-      tupple.position[2] === toCompare.position[2]
-    )
-    const similar = similarNormal && similarPosition
-    if (similar) {
-      return {tupple, index: i}
-    }
-  }
-  return undefined */
 }
 
 module.exports = csgToGeometries
