@@ -12,10 +12,10 @@ function deeperAssign (currentState, options) {
   object.keys(objects[1]).forEach((key)=>{
     objects[0][key] = Object.assign({}, objects[1][key])
   } */
-  let rootKeys = ['camera', 'controls', 'background', 'meshColor', 'grid', 'axes', 'lighting', 'entities', 'render']
+  let rootKeys = ['overrideOriginalColors', 'camera', 'controls', 'background', 'meshColor', 'grid', 'axes', 'lighting', 'entities', 'render']
   let output = {}
   rootKeys.forEach(function (key) {
-    if (key === 'render') {
+    if (key === 'render' || key === 'overrideOriginalColors') {
       output[key] = options[key] !== undefined ? options[key] : currentState[key]
     } else {
       const current = currentState ? currentState[key] : {}

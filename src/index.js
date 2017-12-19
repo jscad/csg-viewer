@@ -17,8 +17,7 @@ const makeCsgViewer = function (container, options = {}) {
     controls: require('./cameraAndControls/orbitControls').defaults,
     //
     background: [1, 1, 1, 1],
-    meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags 
-    conversionColor: undefined, // for csg/cag conversion
+    meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags
     grid: {
       show: false,
       color: [1, 1, 1, 1]

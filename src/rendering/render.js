@@ -44,7 +44,9 @@ const prepareRender = (regl, params) => {
       })
       drawCSGs.forEach((drawCSG, index) => {
         const primitive = entities[index].type === '2d' ? 'lines' : 'triangles'
-        drawCSG({color: meshColor, primitive})
+        // overrideOriginalColors
+        // console.log('meshColor', meshColor)
+        drawCSG({color: meshColor, primitive, useVertexColors: !props.overrideOriginalColors})
       })
       // drawTest({color: [1, 0, 0, 1], model: mat4.translate(mat4.create(), mat4.identity([]), [100, 0, 200])})
       if (props.grid.show) {

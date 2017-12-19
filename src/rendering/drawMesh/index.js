@@ -1,5 +1,4 @@
 const mat4 = require('gl-mat4')
-
 const vao = require('vertex-ao')
 
 const vColorVert = `
@@ -48,6 +47,9 @@ uniform vec3 opacity;
 varying vec4 _worldSpacePosition;
 varying vec4 vColor;
 
+uniform vec4 ucolor;
+uniform float vColorToggler;
+
 uniform vec2 printableArea;
 
 vec4 errorColor = vec4(0.15, 0.15, 0.15, 0.3);//vec4(0.15, 0.15, 0.15, 0.3);
@@ -56,7 +58,7 @@ varying float ambientAo;
 
 void main () {
   vec4 depth = gl_FragCoord;
-  vec4 endColor = vColor;//color;
+  vec4 endColor = vColor * vColorToggler + ucolor * (1.0 - vColorToggler);
 
   vec3 ambient = ambientLightAmount * endColor.rgb; //ambientAo * 
 
@@ -165,7 +167,9 @@ const drawMesh = function (regl, params = {extras: {}}) {
 
     uniforms: {
       model: (context, props) => props && props.model ? props.model : mat4.identity([]),
-      ucolor: (context, props) => props && props.color ? props.color : [1, 1, 1, 1]
+      ucolor: (context, props) => props && props.color ? props.color : [1, 1, 1, 1],
+      // semi hack, woraround to enable/disable vertex colors!!!
+      vColorToggler: (context, props) => (props && props.useVertexColors && props.useVertexColors === true) ? 1.0 : 0.0
     },
     attributes: {
       position: buffer(geometry.positions),
@@ -182,7 +186,7 @@ const drawMesh = function (regl, params = {extras: {}}) {
         dst: 'one minus src alpha'
       }
     },
-    primitive: (context, props) => props && props.primitive ? props.primitive : 'triangles' //'lines'
+    primitive: (context, props) => props && props.primitive ? props.primitive : 'triangles'
   }
 
   if (geometry.cells) {
