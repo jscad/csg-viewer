@@ -32,9 +32,6 @@ const makeCsgViewer = function (container, options = {}) {
     entities: [] // inner representation of the CSG's geometry + meta (bounds etc)
   }
 
-  let baseParams = deeperAssign(defaults, options)
-  let state = baseParams
-
   // we use an observable of parameters to play nicely with the other observables
   // note: subjects are anti patterns, but they simplify things here so ok for now
   const params$ = holdSubject()
@@ -46,28 +43,25 @@ const makeCsgViewer = function (container, options = {}) {
   const gestures = pointerGestures(container)
   const resizes$ = require('./cameraAndControls/elementSizing')(container)
 
-  // we keep the render function around, until we need to swap it out in case of new data
+  let state = deeperAssign(defaults, options)
+  // note we keep the render function around, until we need to swap it out in case of new data
   state.render = prepareRender(regl, state)
 
-  const cameraActions = makeCameraActions({gestures, resizes$, params$})
-  const dataActions = makeActions({data$, params$})
+  const sources$ = {gestures, resizes$, params$, data$}
+  const cameraActions = makeCameraActions(sources$)
+  const dataActions = makeActions(sources$)
   const actions = most.mergeArray(dataActions.concat(cameraActions))
   const dataState$ = makeState(actions, state, regl)
 
-  dataState$
-    .forEach(function (state) {
-      // console.log('emmitting state', state)
-      state.render(state)
-    })
+  // re-render whenever state changes, since visuals are a function of the state
+  dataState$.forEach(state => state.render(state))
 
   /** main viewer function : call this one with different parameters and/or data to update the viewer
    * @param  {Object} options={}
    * @param  {Object} data
    */
-  return function csgViewer (options = {}, data) {
-    const params = options
-    // state = deeperAssign(state, options)
-    // setup data
+  return function csgViewer (params = {}, data) {
+    // dispatch data & params
     data$.next(data)
     params$.next(params)
     return regl

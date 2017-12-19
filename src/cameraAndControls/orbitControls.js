@@ -258,14 +258,16 @@ function pan ({controls, camera}, delta) {
   * @param {Object} entity an object containing a 'bounds' property for bounds information
   * @return {Object} the updated camera data/state
 */
-function zoomToFit ({controls, camera}) {
+function zoomToFit ({controls, camera, entities}) {
   // our camera.fov is already in radian, no need to convert
-  const {zoomToFit, entity} = controls
-  if (zoomToFit.targets !== 'all' || entity === undefined || !entity.bounds) {
+  const {zoomToFit} = controls
+  if (entities.length < 1 || zoomToFit.targets !== 'all') { //! == 'all' || entity === undefined || !entity.bounds) {
     return {controls, camera}
   }
+  // fixme: for now , we only use the first item
+  const targetEntity = entities[0]
   const {fov, target, position} = camera
-  const {bounds} = controls.entity
+  const {bounds} = targetEntity
   const {tightness} = Object.assign({}, zoomToFit, controlsProps.zoomToFit)
   /*
     - x is scaleForIdealDistance
@@ -293,7 +295,7 @@ function zoomToFit ({controls, camera}) {
   * @return {Object} the updated camera data/state
 */
 function reset ({controls, camera}, desiredState) {
-  /*camera = Object.assign({}, camera, desiredState.camera)
+  /* camera = Object.assign({}, camera, desiredState.camera)
   camera.projection = mat4.perspective([], camera.fov, camera.aspect, camera.near, camera.far)
   controls = Object.assign({}, controls, desiredState.controls)
   return {

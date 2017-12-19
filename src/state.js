@@ -1,4 +1,3 @@
-const most = require('most')
 const {deeperAssign} = require('./utils')
 const entitiesFromSolids = require('./entitiesFromSolids')
 const prepareRender = require('./rendering/render')

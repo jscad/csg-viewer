@@ -1,9 +1,9 @@
 const most = require('most')
 const {rafStream} = require('../observable-utils/rafStream')
-// const rate$ = rafStream()
+const limitFlow = require('../observable-utils/limitFlow')
 
 function actions (sources) {
-  const {gestures, resizes$, params$} = sources
+  const {gestures, resizes$, params$, data$} = sources
 
   let rotations$ = gestures.drags
   .filter(x => x !== undefined) // TODO: add this at gestures.drags level
@@ -56,13 +56,12 @@ function actions (sources) {
     gestures.taps.filter(taps => taps.nb === 3),
     onFirstStart$
   ])
-  .combine(params => params, params$)
+  .combine(data => data, data$)
   .map(data => ({type: 'zoomToFit', data}))
   .multicast()
 
   const update$ = rafStream()
     .map(_ => ({type: 'update', data: undefined}))
-    // .forEach(x=>console.log('raf update',x))
 
   return [
     rotations$,
@@ -71,8 +70,7 @@ function actions (sources) {
     reset$,
     zoomToFit$,
     resizes$.map(data => ({type: 'resize', data})),
-    params$.map(data => ({type: 'setFromParams', data})),
-    update$.throttle(22)
+    update$.thru(limitFlow(33))
   ]
 }
 
