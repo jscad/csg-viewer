@@ -6,9 +6,10 @@
   "scripts": {
     "test": "tape test.js",
     "dev": "budo example/demo.js --title csg-viewer --live --css example/demo.css -- -t glslify -t brfs",
-    "build": "browserify -p common-shakeify index.js > bundle.js",
+    "build": "browserify -p common-shakeify src/index.js > bundle.js",
     "minify": "uglifyjs bundle.js --compress > bundle.min.js",
-    "compress": "gzipme bundle.min.js"
+    "compress": "gzipme bundle.min.js",
+    "build-min":"npm run build && npm run minify && npm run compress"
   },
   "author": "Mark 'kaosat-dev' Moissette",
   "license": "MIT",
@@ -20,7 +21,7 @@
     "uglify-es": "^3.2.1"
   },
   "dependencies": {
-    "@jscad/scad-api": "^0.4.2",
+    "@most/create": "^2.0.1",
     "angle-normals": "^1.0.0",
     "brfs": "^1.4.3",
     "camera-unproject": "^1.0.1",
