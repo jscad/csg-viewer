@@ -12,13 +12,17 @@ function deeperAssign (currentState, options) {
   object.keys(objects[1]).forEach((key)=>{
     objects[0][key] = Object.assign({}, objects[1][key])
   } */
-  let rootKeys = ['camera', 'controls', 'background', 'meshColor', 'grid', 'axes', 'lighting', 'entities']
+  let rootKeys = ['camera', 'controls', 'background', 'meshColor', 'grid', 'axes', 'lighting', 'entities', 'render']
   let output = {}
   rootKeys.forEach(function (key) {
-    const current = currentState ? currentState[key] : {}
-    const updated = options[key]
-    let initial = Array.isArray(updated) ? [] : {}
-    output[key] = Object.assign(initial, current, updated)
+    if (key === 'render') {
+      output[key] = options[key] !== undefined ? options[key] : currentState[key]
+    } else {
+      const current = currentState ? currentState[key] : {}
+      const updated = options[key]
+      let initial = (Array.isArray(updated) || Array.isArray(current)) ? [] : {}
+      output[key] = Object.assign(initial, current, updated)
+    }
   })
   return output
   // for(object.key())

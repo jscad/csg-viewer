@@ -1,4 +1,6 @@
 const most = require('most')
+const {rafStream} = require('../observable-utils/rafStream')
+// const rate$ = rafStream()
 
 function actions (sources) {
   const {gestures, resizes$, params$} = sources
@@ -58,6 +60,10 @@ function actions (sources) {
   .map(data => ({type: 'zoomToFit', data}))
   .multicast()
 
+  const update$ = rafStream()
+    .map(_ => ({type: 'update', data: undefined}))
+    // .forEach(x=>console.log('raf update',x))
+
   return [
     rotations$,
     pan$,
@@ -65,7 +71,8 @@ function actions (sources) {
     reset$,
     zoomToFit$,
     resizes$.map(data => ({type: 'resize', data})),
-    params$.map(data => ({type: 'setFromParams', data}))
+    params$.map(data => ({type: 'setFromParams', data})),
+    update$.throttle(22)
   ]
 }
 

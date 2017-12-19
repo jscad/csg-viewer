@@ -1,14 +1,12 @@
 const {pointerGestures} = require('most-gestures')
 const {holdSubject} = require('./observable-utils/most-subject/index')
 // require('most-subject')github:briancavalier/most-subject : issues with webpack hence the above
-
-const prepareRender = require('./rendering/render')
-
-const prepareCameraAndControls = require('./cameraAndControls/cameraAndControls')
 const makeCameraActions = require('./cameraAndControls/actions')
 const makeActions = require('./actions')
 const makeState = require('./state')
 const {deeperAssign} = require('./utils')
+const most = require('most')
+const prepareRender = require('./rendering/render')
 
 const makeCsgViewer = function (container, options = {}) {
   const defaults = {
@@ -29,14 +27,10 @@ const makeCsgViewer = function (container, options = {}) {
     //
     lighting: {
       smooth: false
-    }
+    },
+    //
+    entities: [] // inner representation of the CSG's geometry + meta (bounds etc)
   }
-
-  let cachedSolids
-  // inner representation of the CSG's geometry + meta (bounds etc)
-  let _entities
-  // we keep the render function around, until we need to swap it out in case of new data
-  let render
 
   let baseParams = deeperAssign(defaults, options)
   let state = baseParams
@@ -52,26 +46,18 @@ const makeCsgViewer = function (container, options = {}) {
   const gestures = pointerGestures(container)
   const resizes$ = require('./cameraAndControls/elementSizing')(container)
 
-  const cameraActions = makeCameraActions({gestures, resizes$, params$})
-  const cameraAndControls = prepareCameraAndControls(cameraActions, baseParams)
-  cameraAndControls.map(({camera, controls}) => {
-    return Object.assign({}, state, {camera, controls})
-  })
-  .forEach(function (state) {
-    if (render !== undefined) {
-      render(state)
-    }
-  })
+  // we keep the render function around, until we need to swap it out in case of new data
+  state.render = prepareRender(regl, state)
 
-  const actions = makeActions({data$})
-  const dataState$ = makeState(actions, baseParams)
+  const cameraActions = makeCameraActions({gestures, resizes$, params$})
+  const dataActions = makeActions({data$, params$})
+  const actions = most.mergeArray(dataActions.concat(cameraActions))
+  const dataState$ = makeState(actions, state, regl)
 
   dataState$
-    .forEach(function (_state) {
-      const {entities} = _state
-      _entities = entities
-      // create a new render function, with updated data
-      render = prepareRender(regl, Object.assign({}, state, {entities}))
+    .forEach(function (state) {
+      // console.log('emmitting state', state)
+      state.render(state)
     })
 
   /** main viewer function : call this one with different parameters and/or data to update the viewer
@@ -80,7 +66,7 @@ const makeCsgViewer = function (container, options = {}) {
    */
   return function csgViewer (options = {}, data) {
     const params = options
-    state = deeperAssign(state, options)
+    // state = deeperAssign(state, options)
     // setup data
     data$.next(data)
     params$.next(params)
