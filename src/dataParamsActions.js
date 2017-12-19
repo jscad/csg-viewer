@@ -12,6 +12,7 @@ function actions (sources) {
     .filter(data => data !== undefined && data.solids)
     .multicast()
     .map(data => ({type: 'setEntitiesFromSolids', data: data.solids}))
+
   const updateParams$ = params$
     .multicast()
     .map(data => ({type: 'updateParams', data: data}))
