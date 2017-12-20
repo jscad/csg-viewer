@@ -1,37 +1,31 @@
 const {update, rotate, zoom, pan, zoomToFit, reset} = require('./cameraAndControls/orbitControls')
 const {setProjection} = require('./cameraAndControls/perspectiveCamera')
-
-function copyAssign (original, newData) {
-  // console.log('updated', newData.camera.view, original.camera.view)
-  const camera = Object.assign({}, original.camera, newData.camera)
-  const controls = Object.assign({}, original.controls, newData.controls)
-  return Object.assign({}, original, {camera, controls})
-}
+const {merge} = require('./utils')
 
 function makeReducers (initialState) {
   const reducers = {
     undefined: (state) => state, // no op
     update: (state) => {
-      return copyAssign(state, update(state))
+      return merge({}, state, update(state))
     },
     resize: (state, sizes) => {
-      return copyAssign(state, {camera: setProjection(state.camera, sizes)})
+      return merge({}, state, {camera: setProjection(state.camera, sizes)})
     },
     rotate: (state, angles) => {
-      return copyAssign(state, rotate(state, angles))
+      return merge({}, state, rotate(state, angles))
     },
     zoom: (state, zooms) => {
-      return copyAssign(state, zoom(state, zooms))
+      return merge({}, state, zoom(state, zooms))
     },
     pan: (state, delta) => {
-      return copyAssign(state, pan(state, delta))
+      return merge({}, state, pan(state, delta))
     },
     zoomToFit: (state, when) => {
       console.log('zoomToFIt', when)
-      return copyAssign(state, zoomToFit(state))
+      return merge({}, state, zoomToFit(state))
     },
     reset: (state, params) => {
-      let resetState = copyAssign(state, reset(state, initialState))
+      let resetState = merge({}, state, reset(state, initialState))
       // then apply zoomToFIt
       resetState = zoomToFit(resetState)
       return resetState

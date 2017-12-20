@@ -4,7 +4,7 @@ const {holdSubject} = require('./observable-utils/most-subject/index')
 const makeCameraControlsActions = require('./cameraControlsActions')
 const makeDataParamsActions = require('./dataParamsActions')
 const makeState = require('./state')
-const {deeperAssign} = require('./utils')
+const {merge} = require('./utils')
 const most = require('most')
 const prepareRender = require('./rendering/render')
 
@@ -41,7 +41,7 @@ const makeCsgViewer = function (container, options = {}) {
   // initialize when container changes
   const regl = require('regl')(container)
 
-  let state = deeperAssign(defaults, options)
+  let state = merge({}, defaults, options)
   // note we keep the render function around, until we need to swap it out in case of new data
   state.render = prepareRender(regl, state)
 

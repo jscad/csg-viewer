@@ -1,4 +1,4 @@
-const {deeperAssign} = require('./utils')
+const {merge} = require('./utils')
 const makeCameraAndControlsReducers = require('./cameraControlsReducers')
 const makeDataAndParamsReducers = require('./dataParamsReducers')
 
@@ -13,7 +13,7 @@ function makeState (actions, initialState, regl) {
     .scan(function (state, action) {
       const reducer = reducers[action.type] ? reducers[action.type] : (state) => state
       const updatedData = reducer(state, action.data, initialState, regl)
-      const newState = deeperAssign(state, updatedData)
+      const newState = merge({}, state, updatedData)
       // console.log('SCAAAN', action, newState)
       return newState
     }, initialState)

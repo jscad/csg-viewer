@@ -94,8 +94,7 @@ function update ({controls, camera}) {
   }
 
   if (controls.autoRotate.enabled && controls.userControl.rotate) {
-    // console.log('fooo')
-    curThetaDelta += 2 * Math.PI / 60 / 60 * 2.0//controls.autoRotate.speed // arbitrary, kept for backwards compatibility
+    curThetaDelta += 2 * Math.PI / 60 / 60 * controls.autoRotate.speed
   }
 
   theta += curThetaDelta

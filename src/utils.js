@@ -7,29 +7,39 @@ function toArray (data) {
   return data
 }
 
-function deeperAssign (currentState, options) {
-  /* console.log('objects', objects)
-  object.keys(objects[1]).forEach((key)=>{
-    objects[0][key] = Object.assign({}, objects[1][key])
-  } */
-  let rootKeys = ['overrideOriginalColors', 'camera', 'controls', 'background', 'meshColor', 'grid', 'axes', 'lighting', 'entities', 'render']
-  let output = {}
-  rootKeys.forEach(function (key) {
-    if (key === 'render' || key === 'overrideOriginalColors') {
-      output[key] = options[key] !== undefined ? options[key] : currentState[key]
+/** kinda, sorta like a nested object.assign, so that nested object values
+ * do not get lost
+ * note : this is NOT actually making anything immutable !
+ * @param  {} output={}
+ * @param  {} currentState
+ * @param  {} options
+ */
+function merge (output = {}, currentState, options) {
+  output = currentState // JSON.parse(JSON.stringify(currentState))
+  Object.keys(options).forEach(function (key) {
+    const item = options[key]
+    const isObject = typeof item === 'object'
+    const isFunction = typeof item === 'function'
+    const isArray = Array.isArray(item)
+
+    if (isFunction) {
+      output[key] = options[key]
+    } else if (isArray) {
+      const current = currentState[key] || []
+      output[key] = Object.assign([], current, options[key])
+    } else if (isObject) {
+      const current = currentState[key] || {}
+      output[key] = merge({}, current, item)
     } else {
-      const current = currentState ? currentState[key] : {}
-      const updated = options[key]
-      let initial = (Array.isArray(updated) || Array.isArray(current)) ? [] : {}
-      output[key] = Object.assign(initial, current, updated)
+      output[key] = options[key]
     }
   })
+
   return output
-  // for(object.key())
 }
 
 module.exports = {
   flatten,
   toArray,
-  deeperAssign
+  merge
 }
