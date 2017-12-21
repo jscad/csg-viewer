@@ -1,3 +1,4 @@
+const mat4 = require('gl-mat4')
 const {flatten, toArray} = require('./utils')
 const csgToGeometries = require('./geometry-utils/csgToGeometries')
 const cagToGeometries = require('./geometry-utils/cagToGeometries')
@@ -27,9 +28,23 @@ function entitiesFromSolids (baseParams, solids) {
     // const time = (performance.now() - start) / 1000
     // console.log(`Total time for geometry conversion: ${time} s`)
     // console.log('geometry', geometry)
-    const bounds = computeBounds({geometry})// FXIME : ACTUALLY deal with arrays as inputs
-    // reuse
-    const entity = {geometry, bounds, type}
+
+    // bounds
+    const bounds = computeBounds({geometry})// FXIME : ACTUALLY deal with arrays as inputs see above
+
+    // transforms: for now not used, since all transformed are stored in the geometry
+    const matrix = mat4.identity([])
+
+    const transforms = {
+      matrix
+      /* const modelViewMatrix = mat4.multiply(mat4.create(), model, props.camera.view)
+      const normalMatrix = mat4.create()
+      mat4.invert(normalMatrix, modelViewMatrix)
+      mat4.transpose(normalMatrix, normalMatrix)
+      return normalMatrix */
+    }
+
+    const entity = {geometry, transforms, bounds, type}
     return entity
   })
   // }

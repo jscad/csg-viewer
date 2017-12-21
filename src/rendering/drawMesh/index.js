@@ -178,8 +178,7 @@ const drawMesh = function (regl, params = {extras: {}}) {
       vColorToggler: (context, props) => (props && props.useVertexColors && props.useVertexColors === true) ? 1.0 : 0.0,
       // experimental
       unormal: (context, props) => {
-        // return mat4.identity([])
-        const model = mat4.identity([]) // props.model
+        const model = props.model
         const modelViewMatrix = mat4.multiply(mat4.create(), model, props.camera.view)
         const normalMatrix = mat4.create()
         mat4.invert(normalMatrix, modelViewMatrix)
