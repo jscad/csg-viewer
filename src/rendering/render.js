@@ -66,8 +66,8 @@ const prepareRender = (regl, params) => {
   return function render (data) {
     command(data)
     // tick += 0.01
-    // for stats, resizing etc
-    // regl.poll()
+    // important for stats, correct resizing etc
+    regl.poll()
   }
 }
 

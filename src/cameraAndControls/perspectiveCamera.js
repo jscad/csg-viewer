@@ -25,7 +25,7 @@ function setProjection (camera, input) {
   // context.viewportWidth / context.viewportHeight,
   const aspect = input.width / input.height
 
-  const projection = mat4.perspective([], camera.fov, aspect,
+  const projection = mat4.perspective(camera.projection, camera.fov, aspect,
     camera.near,
     camera.far)
   const viewport = [0, 0, input.width, input.height]
