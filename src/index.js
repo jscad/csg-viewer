@@ -54,21 +54,21 @@ const makeCsgViewer = function (container, options = {}) {
   const cameraControlsActions = makeCameraControlsActions(sources$)
   const dataParamsActions = makeDataParamsActions(sources$)
   const actions = most.mergeArray(dataParamsActions.concat(cameraControlsActions))
-  const dataState$ = makeState(actions, state, regl)
+  const state$ = makeState(actions, state, regl)
 
   // re-render whenever state changes, since visuals are a function of the state
-  dataState$.forEach(state => state.render(state))
+  state$.forEach(state => state.render(state))
 
   /** main viewer function : call this one with different parameters and/or data to update the viewer
    * @param  {Object} options={}
    * @param  {Object} data
    */
-  return function csgViewer (params = {}, data) {
+  const csgViewer = function (params = {}, data) {
     // dispatch data & params
     data$.next(data)
     params$.next(params)
-    return regl
   }
+  return {csgViewer, viewerDefaults: defaults, viewerState$: state$}
 }
 
 module.exports = makeCsgViewer
