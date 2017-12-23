@@ -9,11 +9,12 @@
     "build": "browserify -p common-shakeify src/index.js > bundle.js",
     "minify": "uglifyjs bundle.js --compress > bundle.min.js",
     "compress": "gzipme bundle.min.js",
-    "build-min":"npm run build && npm run minify && npm run compress"
+    "build-min": "npm run build && npm run minify && npm run compress"
   },
   "author": "Mark 'kaosat-dev' Moissette",
   "license": "MIT",
   "devDependencies": {
+    "@jscad/scad-api": "^0.4.2",
     "browserify": "^14.5.0",
     "budo": "^10.0.4",
     "common-shakeify": "^0.4.5",
