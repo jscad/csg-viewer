@@ -1,8 +1,11 @@
 const {update, rotate, zoom, pan, zoomToFit, reset} = require('./cameraAndControls/orbitControls')
 const {setProjection} = require('./cameraAndControls/perspectiveCamera')
 const {merge} = require('./utils')
+const {toFrontView, toBackView, toTopView, toLeftView, toRightView, toPerspectiveView} = require('./cameraAndControls/camera')
 
 function makeReducers (initialState) {
+  // make sure to actually save the initial state, as it might get mutated
+  initialState = JSON.parse(JSON.stringify(initialState))
   const reducers = {
     undefined: (state) => state, // no op
     update: (state) => {
@@ -29,6 +32,29 @@ function makeReducers (initialState) {
       // then apply zoomToFIt
       resetState = zoomToFit(resetState)
       return resetState
+    },
+
+    toFrontView: (state, params) => {
+      const newState = merge({}, state, {camera: toFrontView(state)})
+      return newState
+    },
+    toBackView: (state, params) => {
+      return merge({}, state, {camera: toBackView(state)})
+    },
+    toTopView: (state, params) => {
+      return merge({}, state, {camera: toTopView(state)})
+    },
+    toLeftView: (state, params) => {
+      return merge({}, state, {camera: toLeftView(state)})
+    },
+    toRightView: (state, params) => {
+      return merge({}, state, {camera: toRightView(state)})
+    },
+    toPerspectiveView: (state, params) => {
+      return merge({}, state, {camera: toPerspectiveView(state)})
+    },
+    toOrthoView: (state, params) => {
+      return merge({}, state, {})
     }
   }
   return reducers

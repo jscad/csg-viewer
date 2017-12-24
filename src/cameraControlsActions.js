@@ -5,6 +5,9 @@ const limitFlow = require('./observable-utils/limitFlow')
 function actions (sources) {
   const {gestures, resizes$, params$, data$} = sources
 
+  const keyDowns$ = most.fromEvent('keydown', document)
+  keyDowns$.forEach(e => console.log('keydown', e))
+
   let rotations$ = gestures.drags
   .filter(x => x !== undefined) // TODO: add this at gestures.drags level
   .map(function (data) {
@@ -58,9 +61,30 @@ function actions (sources) {
     onFirstStart$
       .map(_ => ({type: 'zoomToFit', data: {origin: 'start'}})),
     data$
-      .map(_ =>({type: 'zoomToFit', data: {origin: 'new-data'}}))
+      .map(_ => ({type: 'zoomToFit', data: {origin: 'new-data'}}))
   ])
   .multicast()
+
+  let toFrontView$ = keyDowns$
+    .filter(event => event.key === 'f')
+
+  let toBackView$ = keyDowns$
+    .filter(event => event.key === 'b')
+
+  let toTopView$ = keyDowns$
+    .filter(event => event.key === 't')
+
+  let toLeftView$ = keyDowns$
+    .filter(event => event.key === 'l')
+
+  let toRightView$ = keyDowns$
+    .filter(event => event.key === 'r')
+
+  let toPerspectiveView$ = keyDowns$
+    .filter(event => event.key === 'p')
+
+  let toOrthoView$ = keyDowns$
+    .filter(event => event.key === 'o')
 
   const update$ = rafStream()
     .map(_ => ({type: 'update', data: undefined}))
@@ -72,7 +96,16 @@ function actions (sources) {
     reset$,
     zoomToFit$,
     resizes$.map(data => ({type: 'resize', data})),
-    update$.thru(limitFlow(33))
+    update$.thru(limitFlow(33)),
+
+    toFrontView$.map(data => ({type: 'toFrontView', data})),
+    toBackView$.map(data => ({type: 'toBackView', data})),
+    toTopView$.map(data => ({type: 'toTopView', data})),
+    toLeftView$.map(data => ({type: 'toLeftView', data})),
+    toRightView$.map(data => ({type: 'toRightView', data})),
+
+    toPerspectiveView$.map(data => ({type: 'toPerspectiveView', data})),
+    toOrthoView$.map(data => ({type: 'toOrthoView', data})),
   ]
 }
 
