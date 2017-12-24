@@ -267,7 +267,6 @@ function zoomToFit ({controls, camera, entities}) {
   let bounds
   // more than one entity, targeted, need to compute the overall bounds
   if (entities.length > 1) {
-    console.log('gnaa')
     const computeBounds = require('../bound-utils/computeBounds')
     bounds = computeBounds(entities)
   } else {

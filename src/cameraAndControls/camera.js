@@ -56,6 +56,14 @@ function toTopView ({camera}) {
   return {view, position}
 }
 
+function toBottomView ({camera}) {
+  const offsetToTarget = vec3.distance(camera.position, camera.target)
+  const position = vec3.add([], [0, 0, -offsetToTarget], camera.target)
+  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
+
+  return {view, position}
+}
+
 function toLeftView ({camera}) {
   const offsetToTarget = vec3.distance(camera.position, camera.target)
   const position = vec3.add([], [offsetToTarget, 0, 0], camera.target)
@@ -81,7 +89,7 @@ function toPerspectiveView ({camera}) {
   return {view, position}
 }
 
-module.exports = {toFrontView, toBackView, toTopView, toRightView, toLeftView, toPerspectiveView}
+module.exports = {toFrontView, toBackView, toTopView, toBottomView, toRightView, toLeftView, toPerspectiveView}
 /* var offset = this.position.clone().sub(this.target)
 var nPost = new THREE.Vector3()
 nPost.y = -offset.length()

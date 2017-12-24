@@ -74,6 +74,9 @@ function actions (sources) {
   let toTopView$ = keyDowns$
     .filter(event => event.key === 't')
 
+  let toBottomView$ = keyDowns$
+    .filter(event => event.key === 'g')
+
   let toLeftView$ = keyDowns$
     .filter(event => event.key === 'l')
 
@@ -101,6 +104,7 @@ function actions (sources) {
     toFrontView$.map(data => ({type: 'toFrontView', data})),
     toBackView$.map(data => ({type: 'toBackView', data})),
     toTopView$.map(data => ({type: 'toTopView', data})),
+    toBottomView$.map(data => ({type: 'toBottomView', data})),
     toLeftView$.map(data => ({type: 'toLeftView', data})),
     toRightView$.map(data => ({type: 'toRightView', data})),
 
