@@ -263,10 +263,19 @@ function zoomToFit ({controls, camera, entities}) {
   if (entities.length < 1 || zoomToFit.targets !== 'all') { //! == 'all' || entity === undefined || !entity.bounds) {
     return {controls, camera}
   }
+
+  let bounds
+  // more than one entity, targeted, need to compute the overall bounds
+  if (entities.length > 1) {
+    console.log('gnaa')
+    const computeBounds = require('../bound-utils/computeBounds')
+    bounds = computeBounds(entities)
+  } else {
+    bounds = entities[0].bounds
+  }
+
   // fixme: for now , we only use the first item
-  const targetEntity = entities[0]
   const {fov, target, position} = camera
-  const {bounds} = targetEntity
   const {tightness} = Object.assign({}, zoomToFit, controlsProps.zoomToFit)
   /*
     - x is scaleForIdealDistance
