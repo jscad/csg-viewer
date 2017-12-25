@@ -195,7 +195,7 @@ const drawMesh = function (regl, params = {extras: {}}) {
       face: cullFace
     },
     blend: {
-      enable: false,
+      enable: true,
       func: {
         src: 'src alpha',
         dst: 'one minus src alpha'
