@@ -1,12 +1,11 @@
 const mat4 = require('gl-mat4')
-
 const vao = require('vertex-ao')
 
 const vColorVert = `
 precision mediump float;
 
 uniform float camNear, camFar;
-uniform mat4 model, view, projection;
+uniform mat4 model, view, projection, unormal;
 
 attribute vec3 position, normal;
 attribute vec4 color;
@@ -14,13 +13,13 @@ attribute vec4 color;
 attribute float ao;
 varying float ambientAo;
 
-varying vec3 fragNormal, fragPosition;
+varying vec3 surfaceNormal, surfacePosition;
 varying vec4 _worldSpacePosition;
 varying vec4 vColor;
 
 void main() {
-  fragPosition = position;
-  fragNormal = normal;
+  surfacePosition = position;
+  surfaceNormal = (unormal * vec4(normal, 1.0)).xyz; //vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
   vec4 worldSpacePosition = model * vec4(position, 1);
   _worldSpacePosition = worldSpacePosition;
   //gl_Position = projection * view * worldSpacePosition;
@@ -35,60 +34,69 @@ void main() {
 }
 `
 // NOTE : HEEEERE
-
 const vColorFrag = `
 precision mediump float;
-varying vec3 fragNormal;
+varying vec3 surfaceNormal, surfacePosition;
+
 uniform float ambientLightAmount;
 uniform float diffuseLightAmount;
+uniform float specularLightAmount;
 
-uniform vec3 lightDir;
+uniform vec3 lightDirection;
+uniform vec3 lightColor;
 uniform vec3 opacity;
+uniform float uMaterialShininess;
 
-varying vec4 _worldSpacePosition;
 varying vec4 vColor;
+uniform vec4 ucolor;
+uniform float vColorToggler;
 
 uniform vec2 printableArea;
-
 vec4 errorColor = vec4(0.15, 0.15, 0.15, 0.3);//vec4(0.15, 0.15, 0.15, 0.3);
-
+varying vec4 _worldSpacePosition;
 varying float ambientAo;
 
 void main () {
   vec4 depth = gl_FragCoord;
-  vec4 endColor = vColor;//color;
+  vec4 endColor = vColor * vColorToggler + ucolor * (1.0 - vColorToggler);
 
   vec3 ambient = ambientLightAmount * endColor.rgb; //ambientAo * 
 
-  float cosTheta = dot(fragNormal, lightDir);
-  vec3 diffuse = diffuseLightAmount * endColor.rgb * clamp(cosTheta , 0.0, 1.0 ) * 0.2;
+  float diffuseWeight = dot(surfaceNormal, lightDirection);
+  vec3 diffuse = diffuseLightAmount * endColor.rgb * clamp(diffuseWeight , 0.0, 1.0 );
 
-  float light2Multiplier = 0.2;
-  float cosTheta2 = dot(fragNormal, vec3(-lightDir.x, lightDir.y, lightDir.z));
-  vec3 diffuse2 = diffuseLightAmount * endColor.rgb * clamp(cosTheta2 , 0.0, 1.0 ) * light2Multiplier;
+  //specular
+  
+  vec4 specularColor = vec4(lightColor,1.0);
+  vec3 eyeDirection = normalize(surfacePosition.xyz);
+  vec3 reflectionDirection = reflect(-lightDirection, surfaceNormal);
+  float specularLightWeight = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+  vec3 specular = specularColor.rgb * specularLightWeight * specularLightAmount;
+
+  /*float light2Multiplier = 0.2;
+  float diffuseWeight2 = dot(surfaceNormal, vec3(-lightDirection.x, lightDirection.y, lightDirection.z));
+  vec3 diffuse2 = diffuseLightAmount * endColor.rgb * clamp(diffuseWeight2 , 0.0, 1.0 ) * light2Multiplier;
 
   float light3Multiplier = 0.2;  
-  float cosTheta3 = dot(fragNormal, vec3(lightDir.x, -lightDir.y, lightDir.z));
-  vec3 diffuse3 = diffuseLightAmount * endColor.rgb * clamp(cosTheta3 , 0.0, 1.0 ) * light3Multiplier;
+  float diffuseWeight3 = dot(surfaceNormal, vec3(lightDirection.x, -lightDirection.y, lightDirection.z));
+  vec3 diffuse3 = diffuseLightAmount * endColor.rgb * clamp(diffuseWeight3 , 0.0, 1.0 ) * light3Multiplier;
 
   float light4Multiplier = 0.2;  
-  float cosTheta4 = dot(fragNormal, vec3(-lightDir.x, -lightDir.y, lightDir.z));
-  vec3 diffuse4 = diffuseLightAmount * endColor.rgb * clamp(cosTheta4 , 0.0, 1.0 ) * light4Multiplier;
-
+  float diffuseWeight4 = dot(surfaceNormal, vec3(-lightDirection.x, -lightDirection.y, lightDirection.z));
+  vec3 diffuse4 = diffuseLightAmount * endColor.rgb * clamp(diffuseWeight4 , 0.0, 1.0 ) * light4Multiplier;*/
+  
+  gl_FragColor = vec4((ambient + diffuse +specular), endColor.a);
   //gl_FragColor = vec4((ambient + diffuse + diffuse2 + diffuse3 + diffuse4), endColor.a);
-  
-  gl_FragColor = vec4((ambient + diffuse + diffuse2 + diffuse3 + diffuse4), endColor.a);
-  
 }
 `
 
 const meshFrag = `
 precision mediump float;
-varying vec3 fragNormal;
+varying vec3 surfaceNormal;
 uniform float ambientLightAmount;
 uniform float diffuseLightAmount;
 uniform vec4 ucolor;
-uniform vec3 lightDir;
+uniform vec3 lightDirection;
 uniform vec3 opacity;
 
 varying vec4 _worldSpacePosition;
@@ -104,10 +112,10 @@ void main () {
   vec4 endColor = ucolor;
 
   vec3 ambient = ambientLightAmount * endColor.rgb;
-  float cosTheta = dot(fragNormal, lightDir);
+  float cosTheta = dot(surfaceNormal, lightDirection);
   vec3 diffuse = diffuseLightAmount * endColor.rgb * clamp(cosTheta , 0.0, 1.0 );
 
-  float cosTheta2 = dot(fragNormal, vec3(-lightDir.x, -lightDir.y, lightDir.z));
+  float cosTheta2 = dot(surfaceNormal, vec3(-lightDirection.x, -lightDirection.y, lightDirection.z));
   vec3 diffuse2 = diffuseLightAmount * endColor.rgb * clamp(cosTheta2 , 0.0, 1.0 );
 
   gl_FragColor = vec4((ambient + diffuse + diffuse2 * v), endColor.a);
@@ -121,12 +129,12 @@ uniform mat4 model, view, projection;
 
 attribute vec3 position, normal;
 
-varying vec3 fragNormal, fragPosition;
+varying vec3 surfaceNormal, surfacePosition;
 varying vec4 _worldSpacePosition;
 
 void main() {
-  fragPosition = position;
-  fragNormal = normal;
+  surfacePosition = position;
+  surfaceNormal = normal;
   vec4 worldSpacePosition = model * vec4(position, 1);
   _worldSpacePosition = worldSpacePosition;
 
@@ -144,7 +152,7 @@ const drawMesh = function (regl, params = {extras: {}}) {
   }
   const {geometry, dynamicCulling, useVertexColors} = Object.assign({}, defaults, params)
 
-  let ambientOcclusion //= vao(geometry.indices, geometry.positions, 10, 1)
+  let ambientOcclusion // = vao(geometry.indices, geometry.positions, 10, 1)
   ambientOcclusion = regl.buffer([])
 
   // vertex colors or not ?
@@ -165,7 +173,18 @@ const drawMesh = function (regl, params = {extras: {}}) {
 
     uniforms: {
       model: (context, props) => props && props.model ? props.model : mat4.identity([]),
-      ucolor: (context, props) => props && props.color ? props.color : [1, 1, 1, 1]
+      ucolor: (context, props) => props && props.color ? props.color : [1, 1, 1, 1],
+      // semi hack, woraround to enable/disable vertex colors!!!
+      vColorToggler: (context, props) => (props && props.useVertexColors && props.useVertexColors === true) ? 1.0 : 0.0,
+      // experimental
+      unormal: (context, props) => {
+        const model = props.model
+        const modelViewMatrix = mat4.multiply(mat4.create(), model, props.camera.view)
+        const normalMatrix = mat4.create()
+        mat4.invert(normalMatrix, modelViewMatrix)
+        mat4.transpose(normalMatrix, normalMatrix)
+        return normalMatrix
+      }
     },
     attributes: {
       position: buffer(geometry.positions),
@@ -176,12 +195,13 @@ const drawMesh = function (regl, params = {extras: {}}) {
       face: cullFace
     },
     blend: {
-      enable: false,
+      enable: true,
       func: {
         src: 'src alpha',
         dst: 'one minus src alpha'
       }
-    }
+    },
+    primitive: (context, props) => props && props.primitive ? props.primitive : 'triangles'
   }
 
   if (geometry.cells) {

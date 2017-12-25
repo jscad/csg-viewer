@@ -26,22 +26,39 @@ function toArray (data) {
  *}
  */
 function computeBounds (object) {
-  /* const objects = toArray(object)
+  let scale
+  let dia
+  let center
+  let size
+  let bbox
+  if (Array.isArray(object) && object.length > 1) {
+    const objects = object
+    let positions = []
+    objects.forEach(function (object) {
+      scale = object.transforms && object.transforms.sca ? object.transforms.sca : 1
+      // TODO deal with nested/ non nested data
+      let geomPositions = object.geometry.positions
+      geomPositions = scale === 1 ? geomPositions : geomPositions.map(pos => pos.map(position => position * scale))
+      positions = positions.concat(geomPositions)// object.geometry.positions.map(position => position * scale))
+    })
+    bbox = boundingBox(positions)
+    center = vec3.scale(vec3.create(), vec3.add(vec3.create(), bbox[0], bbox[1]), 0.5)
+    const bsph = boundingSphere(center, positions)
+    size = [bbox[1][0] - bbox[0][0], bbox[1][1] - bbox[0][1], bbox[1][2] - bbox[0][2]]
+    dia = scale !== 1 ? bsph * Math.max(...scale) : bsph
+  } else {
+    scale = object.transforms && object.transforms.sca ? object.transforms.sca : undefined
+    bbox = boundingBox(object.geometry.positions)
+    if (scale) {
+      bbox[0] = bbox[0].map((x, i) => x * scale[i])
+      bbox[1] = bbox[1].map((x, i) => x * scale[i])
+    }
 
-  const result = objects.reduce(function (acc, object) {
-
-  }) */
-  const scale = object.transforms && object.transforms.sca ? object.transforms.sca : undefined
-  let bbox = boundingBox(object.geometry.positions)
-  if (scale) {
-    bbox[0] = bbox[0].map((x, i) => x * scale[i])
-    bbox[1] = bbox[1].map((x, i) => x * scale[i])
+    center = vec3.scale(vec3.create(), vec3.add(vec3.create(), bbox[0], bbox[1]), 0.5)
+    const bsph = boundingSphere(center, object.geometry.positions)
+    size = [bbox[1][0] - bbox[0][0], bbox[1][1] - bbox[0][1], bbox[1][2] - bbox[0][2]]
+    dia = scale ? bsph * Math.max(...scale) : bsph
   }
-
-  const center = vec3.scale(vec3.create(), vec3.add(vec3.create(), bbox[0], bbox[1]), 0.5)
-  const bsph = boundingSphere(center, object.geometry.positions)
-  const size = [bbox[1][0] - bbox[0][0], bbox[1][1] - bbox[0][1], bbox[1][2] - bbox[0][2]]
-  const dia = scale ? bsph * Math.max(...scale) : bsph
 
   return {
     dia,

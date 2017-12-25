@@ -1,7 +1,7 @@
 const {fromEvent} = require('most')
 // element resize event stream, throttled by throttle amount (250ms default)
 module.exports = function elementSize (element, throttle = 25) {
-  const pixelRatio = window.devicePixelRatio
+  const pixelRatio = window.devicePixelRatio || 1
   function extractSize () {
     const width = Math.floor(element.clientWidth * pixelRatio)
     const height = Math.floor(element.clientHeight * pixelRatio)
