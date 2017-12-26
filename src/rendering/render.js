@@ -31,7 +31,8 @@ const prepareRender = (regl, params) => {
 
   const drawTest = makeDrawMeshNoNormals(regl, {geometry: cube})
   const drawAxis = makeDrawAxis(regl, {})
-  const drawGrid = makeDrawGrid(regl, {size: [1800, 1800], ticks: 10})
+  const drawGrid = makeDrawGrid(regl, {size: [800, 800], ticks: 10})
+  const drawGrid2 = makeDrawGrid(regl, {size: [800, 800], ticks: 1})
 
   let command = (props) => {
     // console.log('params in render', props)
@@ -53,7 +54,11 @@ const prepareRender = (regl, params) => {
       })
       // drawTest({color: [1, 0, 0, 1], model: mat4.translate(mat4.create(), mat4.identity([]), [100, 0, 200])})
       if (props.grid.show) {
-        drawGrid({color: props.grid.color})
+        const gridColor = props.grid.color
+        const subGridColor = [gridColor[0], gridColor[1], gridColor[2], gridColor[3] * 0.35]
+        const fadeOut = props.grid.fadeOut
+        drawGrid({color: gridColor, fadeOut})
+        drawGrid2({color: subGridColor, fadeOut})
         // console.log('gridColor', props.grid.color, props)
       }
       if (props.axes.show) {

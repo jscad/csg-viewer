@@ -8,16 +8,23 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
     color: [1, 1, 1, 1],
     ticks: 1,
     size: [16, 16],
-    fadeOut: true,
+    fadeOut: false,
     centered: false,
     lineWidth: 2
   }
 
   let {size, ticks, fadeOut, centered, lineWidth, color} = Object.assign({}, defaults, params)
 
-  fadeOut = false
   const width = size[0]
   const length = size[1]
+
+  if (false) {
+    const halfWidth = width * 0.5
+    const halfLength = length * 0.5
+    // const gridLine =
+    positions.push(-halfWidth, 0, 0)
+    positions.push(halfWidth, 0, 0)
+  }
 
   if (centered) {
     const halfWidth = width * 0.5
@@ -61,12 +68,9 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
     }
   }
 
-  //fadeOut ? glslify(path.join(__dirname, '/shaders/foggy.frag')) : glslify(path.join(__dirname, '/shaders/grid.frag'))
-  const frag = glslify(path.join(__dirname, '/shaders/grid.frag'))
-
   return regl({
     vert: glslify(path.join(__dirname, '/../basic.vert')),
-    frag,
+    frag: glslify(path.join(__dirname, '/shaders/grid.frag')),
 
     attributes: {
       position: regl.buffer(positions)
@@ -74,11 +78,10 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
     count: positions.length / 3,
     uniforms: {
       model: (context, props) => props && props.model ? props.model : mat4.identity([]),
-      _projection: (context, props) => {
-        return mat4.ortho([], -300, 300, 350, -350, 0.01, 1000)
-      },
       color: (context, props) => props && props.color ? props.color : color,
-      fogColor: (context, props) => props && props.fogColor ? props.fogColor : [1, 1, 1, 1]
+      fogColor: (context, props) => props && props.color ? [props.color[0], props.color[1], props.color[2], 0]
+        : [color[0], color[1], color[2], 0.0],
+      fadeOut: (context, props) => props && props.fadeOut !== undefined ? props.fadeOut : fadeOut
     },
     lineWidth: (context, props) => Math.min((props && props.lineWidth ? props.lineWidth : lineWidth), regl.limits.lineWidthDims[1]),
     primitive: 'lines',
@@ -103,3 +106,49 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
 
   })
 }
+
+/* alternate rendering method
+
+        let count = 80
+        let offset = 10
+        const datas = Array(80).fill(0)
+          .map(function (v, i) {
+            const model = mat4.translate(mat4.identity([]), mat4.identity([]), [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: gridColor, fadeOut, model
+            }
+          })
+        const datas2 = Array(80).fill(0)
+          .map(function (v, i) {
+            let model
+            model = mat4.rotateZ(mat4.identity([]), mat4.identity([]), 1.5708)
+            model = mat4.translate(model, model, [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: gridColor, fadeOut, model
+            }
+          })
+
+        count = 80
+        offset = 1
+        const datas3 = Array(80).fill(0)
+          .map(function (v, i) {
+            const model = mat4.translate(mat4.identity([]), mat4.identity([]), [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: subGridColor, fadeOut, model
+            }
+          })
+        const datas4 = Array(80).fill(0)
+          .map(function (v, i) {
+            let model
+            model = mat4.rotateZ(mat4.identity([]), mat4.identity([]), 1.5708)
+            model = mat4.translate(model, model, [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: subGridColor, fadeOut, model
+            }
+          })
+        // const model = mat4.translate(mat4.identity([]), mat4.identity([]), [0, 50, 0])
+        drawGrid(datas)// {color: gridColor, fadeOut, model})
+        drawGrid(datas2)
+
+        drawGrid(datas3)// {color: gridColor, fadeOut, model})
+        drawGrid(datas4) */
