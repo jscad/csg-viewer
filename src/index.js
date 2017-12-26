@@ -37,9 +37,22 @@ const makeCsgViewer = function (container, options = {}) {
   // note: subjects are anti patterns, but they simplify things here so ok for now
   const params$ = holdSubject()
   const data$ = holdSubject()
+  const errors$ = holdSubject()
 
   // initialize when container changes
-  const regl = require('regl')(container)
+  const regl = require('regl')({
+    container,
+    attributes: {
+      alpha: false
+    },
+    onDone: function (err, callback) {
+      if (err) {
+        errors$.next(err)
+      }
+      // console.error('foo', err)
+      // console.log('all ok', callback)
+    }
+  })
 
   let state = merge({}, defaults, options)
   // note we keep the render function around, until we need to swap it out in case of new data
