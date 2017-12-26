@@ -15,7 +15,6 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
 
   let {size, ticks, fadeOut, centered, lineWidth, color} = Object.assign({}, defaults, params)
 
-  fadeOut = false
   const width = size[0]
   const length = size[1]
 
@@ -61,8 +60,8 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
     }
   }
 
-  //fadeOut ? glslify(path.join(__dirname, '/shaders/foggy.frag')) : glslify(path.join(__dirname, '/shaders/grid.frag'))
-  const frag = glslify(path.join(__dirname, '/shaders/grid.frag'))
+  const frag = fadeOut ? glslify(path.join(__dirname, '/shaders/foggy.frag')) : glslify(path.join(__dirname, '/shaders/grid.frag'))
+  // const frag = glslify(path.join(__dirname, '/shaders/grid.frag'))
 
   return regl({
     vert: glslify(path.join(__dirname, '/../basic.vert')),
@@ -74,11 +73,9 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
     count: positions.length / 3,
     uniforms: {
       model: (context, props) => props && props.model ? props.model : mat4.identity([]),
-      _projection: (context, props) => {
-        return mat4.ortho([], -300, 300, 350, -350, 0.01, 1000)
-      },
       color: (context, props) => props && props.color ? props.color : color,
-      fogColor: (context, props) => props && props.fogColor ? props.fogColor : [1, 1, 1, 1]
+      fogColor: (context, props) => props && props.color ? [props.color[0], props.color[1], props.color[2], 0]
+        : [color[0], color[1], color[2], 0.0]
     },
     lineWidth: (context, props) => Math.min((props && props.lineWidth ? props.lineWidth : lineWidth), regl.limits.lineWidthDims[1]),
     primitive: 'lines',

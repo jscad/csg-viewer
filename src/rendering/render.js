@@ -31,8 +31,8 @@ const prepareRender = (regl, params) => {
 
   const drawTest = makeDrawMeshNoNormals(regl, {geometry: cube})
   const drawAxis = makeDrawAxis(regl, {})
-  const drawGrid = makeDrawGrid(regl, {size: [1800, 1800], ticks: 10})
-  const drawGrid2 = makeDrawGrid(regl, {size: [1800, 1800], ticks: 1})
+  const drawGrid = makeDrawGrid(regl, {size: [800, 800], ticks: 10})
+  const drawGrid2 = makeDrawGrid(regl, {size: [800, 800], ticks: 1})
 
   let command = (props) => {
     // console.log('params in render', props)
