@@ -18,6 +18,14 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
   const width = size[0]
   const length = size[1]
 
+  if (false) {
+    const halfWidth = width * 0.5
+    const halfLength = length * 0.5
+    // const gridLine =
+    positions.push(-halfWidth, 0, 0)
+    positions.push(halfWidth, 0, 0)
+  }
+
   if (centered) {
     const halfWidth = width * 0.5
     const halfLength = length * 0.5
@@ -98,3 +106,49 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
 
   })
 }
+
+/* alternate rendering method
+
+        let count = 80
+        let offset = 10
+        const datas = Array(80).fill(0)
+          .map(function (v, i) {
+            const model = mat4.translate(mat4.identity([]), mat4.identity([]), [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: gridColor, fadeOut, model
+            }
+          })
+        const datas2 = Array(80).fill(0)
+          .map(function (v, i) {
+            let model
+            model = mat4.rotateZ(mat4.identity([]), mat4.identity([]), 1.5708)
+            model = mat4.translate(model, model, [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: gridColor, fadeOut, model
+            }
+          })
+
+        count = 80
+        offset = 1
+        const datas3 = Array(80).fill(0)
+          .map(function (v, i) {
+            const model = mat4.translate(mat4.identity([]), mat4.identity([]), [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: subGridColor, fadeOut, model
+            }
+          })
+        const datas4 = Array(80).fill(0)
+          .map(function (v, i) {
+            let model
+            model = mat4.rotateZ(mat4.identity([]), mat4.identity([]), 1.5708)
+            model = mat4.translate(model, model, [0, i * offset - (count * 0.5 * offset), 0])
+            return {
+              color: subGridColor, fadeOut, model
+            }
+          })
+        // const model = mat4.translate(mat4.identity([]), mat4.identity([]), [0, 50, 0])
+        drawGrid(datas)// {color: gridColor, fadeOut, model})
+        drawGrid(datas2)
+
+        drawGrid(datas3)// {color: gridColor, fadeOut, model})
+        drawGrid(datas4) */
