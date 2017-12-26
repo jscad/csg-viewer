@@ -20,7 +20,8 @@ const makeCsgViewer = function (container, options = {}) {
     meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags
     grid: {
       show: false,
-      color: [1, 1, 1, 1]
+      color: [1, 1, 1, 1],
+      fadeOut: true
     },
     axes: {
       show: true

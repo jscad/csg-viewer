@@ -8,7 +8,7 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
     color: [1, 1, 1, 1],
     ticks: 1,
     size: [16, 16],
-    fadeOut: true,
+    fadeOut: false,
     centered: false,
     lineWidth: 2
   }
@@ -60,12 +60,9 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
     }
   }
 
-  const frag = fadeOut ? glslify(path.join(__dirname, '/shaders/foggy.frag')) : glslify(path.join(__dirname, '/shaders/grid.frag'))
-  // const frag = glslify(path.join(__dirname, '/shaders/grid.frag'))
-
   return regl({
     vert: glslify(path.join(__dirname, '/../basic.vert')),
-    frag,
+    frag: glslify(path.join(__dirname, '/shaders/grid.frag')),
 
     attributes: {
       position: regl.buffer(positions)
@@ -75,7 +72,8 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
       model: (context, props) => props && props.model ? props.model : mat4.identity([]),
       color: (context, props) => props && props.color ? props.color : color,
       fogColor: (context, props) => props && props.color ? [props.color[0], props.color[1], props.color[2], 0]
-        : [color[0], color[1], color[2], 0.0]
+        : [color[0], color[1], color[2], 0.0],
+      fadeOut: (context, props) => props && props.fadeOut !== undefined ? props.fadeOut : fadeOut
     },
     lineWidth: (context, props) => Math.min((props && props.lineWidth ? props.lineWidth : lineWidth), regl.limits.lineWidthDims[1]),
     primitive: 'lines',

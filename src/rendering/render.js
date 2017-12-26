@@ -56,8 +56,9 @@ const prepareRender = (regl, params) => {
       if (props.grid.show) {
         const gridColor = props.grid.color
         const subGridColor = [gridColor[0], gridColor[1], gridColor[2], gridColor[3] * 0.35]
-        drawGrid({color: gridColor})
-        drawGrid2({color: subGridColor})
+        const fadeOut = props.grid.fadeOut
+        drawGrid({color: gridColor, fadeOut})
+        drawGrid2({color: subGridColor, fadeOut})
         // console.log('gridColor', props.grid.color, props)
       }
       if (props.axes.show) {
