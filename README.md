@@ -82,3 +82,8 @@ Work in progress!
 ## Sponsors
 
 * An earlier version of this viewer has been developped for and very kindly sponsored by [Copenhagen Fabrication / Stykka](https://www.stykka.com/)
+
+## License
+
+[The MIT License (MIT)](./LICENSE)
+(unless specified otherwise)
