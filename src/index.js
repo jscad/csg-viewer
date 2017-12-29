@@ -10,14 +10,16 @@ const prepareRender = require('./rendering/render')
 
 const makeCsgViewer = function (container, options = {}) {
   const defaults = {
-    csgCheck: false, // not used currently !
-    overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
+    glOptions: {// all lower level webgl options passed directly through regl
+      alpha: false
+    },
     // after this , initial params of camera, controls & render
     camera: require('./cameraAndControls/perspectiveCamera').defaults,
     controls: require('./cameraAndControls/orbitControls').defaults,
     //
     background: [1, 1, 1, 1],
     meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags
+    overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead    
     grid: {
       show: false,
       color: [1, 1, 1, 1],
@@ -31,21 +33,22 @@ const makeCsgViewer = function (container, options = {}) {
       smooth: false
     },
     //
-    entities: [] // inner representation of the CSG's geometry + meta (bounds etc)
+    entities: [], // inner representation of the CSG's geometry + meta (bounds etc)
+    csgCheck: false // not used currently
   }
+  let state = merge({}, defaults, options)
 
   // we use an observable of parameters to play nicely with the other observables
   // note: subjects are anti patterns, but they simplify things here so ok for now
   const params$ = holdSubject()
   const data$ = holdSubject()
   const errors$ = holdSubject()
+  // const state$ = most.just(state)
 
   // initialize when container changes
   const regl = require('regl')({
     container,
-    attributes: {
-      alpha: false
-    },
+    attributes: state.glOptions,
     onDone: function (err, callback) {
       if (err) {
         errors$.next(err)
@@ -55,7 +58,6 @@ const makeCsgViewer = function (container, options = {}) {
     }
   })
 
-  let state = merge({}, defaults, options)
   // note we keep the render function around, until we need to swap it out in case of new data
   state.render = prepareRender(regl, state)
 

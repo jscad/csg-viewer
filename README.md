@@ -3,7 +3,9 @@
 [![GitHub version](https://badge.fury.io/gh/jscad%2Fcsg-viewer.svg)](https://badge.fury.io/gh/jscad%2Fcsg-viewer)
 [![Build Status](https://travis-ci.org/jscad/csg-viewer.svg)](https://travis-ci.org/jscad/csg-viewer)
 
-> 3D viewer for Csg.js / Openjscad csg data : small, fast, simple
+> 3D viewer for Csg.js / Openjscad csg/cag data : small, fast, simple
+
+This is a very early version of this viewer ! Expect changes ! 
 
 ## Overview
 
@@ -25,9 +27,43 @@ npm install jscad/csg-viewer
 
 ```javascript
 // With ES6/2015 +
-import csgViewer from 'csg-viewer'
+import makeViewer from 'csg-viewer'
 // with commonjs
-const csgViewer = require('csg-viewer')
+// import viewer creator function
+const makeViewer = require('csg-viewer')
+
+const viewerOptions = {
+  background: [0.211, 0.2, 0.207, 1], // [1, 1, 1, 1],//54, 51, 53
+  meshColor: [0.4, 0.6, 0.5, 1],
+  grid: {
+    display: true,
+    color: [1, 1, 1, 0.1]
+  },
+  camera: {
+    position: [450, 550, 700]
+  },
+  controls: {
+    limits: {
+      maxDistance: 1600,
+      minDistance: 0.01
+    }
+  }
+}
+// create viewer
+const {csgViewer, viewerDefaults, viewerState$} = makeViewer(document.body, viewerOptions)
+// and just run it, providing csg/cag data
+let csg = CSG.cube()
+csgViewer(viewerOptions, {solids: csg})
+
+//you can also just call the viewer function again with either/or new data or new settings
+csgViewer({camera: { position: [0, 100, 100] }})
+
+csg = CSG.sphere()
+csgViewer({}, {solids: csg})
+
+// and again, with different settings: it only overrides the given settings
+csgViewer({controls: {autoRotate: {enabled: true}}})
+
 ```
 
 ## Test
@@ -40,3 +76,14 @@ type:
 
 ## API
 
+Work in progress!
+
+
+## Sponsors
+
+* An earlier version of this viewer has been developped for and very kindly sponsored by [Copenhagen Fabrication / Stykka](https://www.stykka.com/)
+
+## License
+
+[The MIT License (MIT)](./LICENSE)
+(unless specified otherwise)
