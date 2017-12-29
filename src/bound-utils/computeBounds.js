@@ -38,7 +38,12 @@ function computeBounds (object) {
       scale = object.transforms && object.transforms.sca ? object.transforms.sca : 1
       // TODO deal with nested/ non nested data
       let geomPositions = object.geometry.positions
-      geomPositions = scale === 1 ? geomPositions : geomPositions.map(pos => pos.map(position => position * scale))
+      const isNested = geomPositions.length > 1 && Array.isArray(geomPositions[0])
+      geomPositions = scale === 1 ? geomPositions
+      : (
+        isNested ? geomPositions.map(pos => pos.map(position => position * scale)) : geomPositions.map(position => position * scale)
+      )
+
       positions = positions.concat(geomPositions)// object.geometry.positions.map(position => position * scale))
     })
     bbox = boundingBox(positions)

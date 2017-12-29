@@ -10,12 +10,15 @@ function cagToGeometries (cags, options) {
   let points = cagToPointsArray(cags).map(x => [x[0], x[1], 0])
   let normals = points.map(x => [0, 0, -1])
   let colors = points.map(x => color)
+  let indices = points.map((x, i) => i) // FIXME: temporary, not really needed, need to change drawMesh
+
   return [
     {
     // indices,
-      positions: flatten(points),
-      normals: flatten(normals),
-      colors: flatten(colors)
+      positions: points,
+      normals: normals,
+      colors: colors,
+      indices
     }]
 }
 
