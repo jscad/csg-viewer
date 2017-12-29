@@ -50,7 +50,7 @@ const viewerOptions = {
   }
 }
 // create viewer
-const {csgViewer, viewerDefaults, viewerState$} = makeCsgViewer(document.body, viewerOptions)
+const {csgViewer, viewerDefaults, viewerState$} = makeViewer(document.body, viewerOptions)
 // and just run it, providing csg/cag data
 let csg = CSG.cube()
 csgViewer(viewerOptions, {solids: csg})
