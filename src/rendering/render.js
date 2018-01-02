@@ -36,14 +36,14 @@ const prepareRender = (regl, params) => {
 
   let command = (props) => {
     // console.log('params in render', props)
-    const {meshColor, background, camera} = props
+    const {meshColor, camera} = props
 
     const color = meshColor
     const useVertexColors = !props.overrideOriginalColors
 
     renderWrapper(regl)(props, context => {
       regl.clear({
-        color: background,
+        color: props.rendering.background,
         depth: 1
       })
       drawCSGs.forEach((drawCSG, index) => {

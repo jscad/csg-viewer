@@ -17,9 +17,11 @@ const makeCsgViewer = function (container, options = {}) {
     camera: require('./cameraAndControls/perspectiveCamera').defaults,
     controls: require('./cameraAndControls/orbitControls').defaults,
     //
-    background: [1, 1, 1, 1],
     meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags
-    overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead    
+    overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
+    lighting: {
+      smooth: false
+    },
     grid: {
       show: false,
       color: [1, 1, 1, 1],
@@ -28,9 +30,24 @@ const makeCsgViewer = function (container, options = {}) {
     axes: {
       show: true
     },
-    //
-    lighting: {
-      smooth: false
+    rendering: {
+      background: [1, 1, 1, 1],
+      lightDirection: [0.2, 0.2, 1],
+      lightPosition: [100, 200, 100],
+      ambientLightAmount: 0.3,
+      diffuseLightAmount: 0.89,
+      specularLightAmount: 0.16,
+      materialShininess: 8.0
+    },
+    shortcuts: {
+      toFrontView: 'f',
+      toBackView: 'b',
+      toTopView: 't',
+      toBottomView: 'g',
+      toLeftView: 'l',
+      toRightView: 'r',
+      toPerspectiveView: 'p',
+      toOrthoView: 'o'
     },
     //
     entities: [], // inner representation of the CSG's geometry + meta (bounds etc)

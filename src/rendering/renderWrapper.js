@@ -20,20 +20,20 @@ function renderWrapper (regl, params = {}) {
       // accessories to the above
       invertedView: (context, props) => mat4.invert([], props.camera.view),
       // lighting stuff, needs cleanup
-      lightColor: () => [1, 0.8, 0],
-      lightDirection: (context) => context.lightDirection || [0, 0, 0],
+      lightPosition: (context, props) => props && props.rendering && props.rendering.lightPosition ? props.rendering.lightPosition : [100, 200, 100],
+      lightDirection: (context, props) => props.rendering.lightDirection || context.lightDirection || [0, 0, 0],
       lightView: (context) => {
         return mat4.lookAt([], context.lightDirection, [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])
       },
       lightProjection: mat4.ortho([], -25, -25, -20, 20, -25, 25),
-      lightPosition: [100, 200, 100],
-      ambientLightAmount: 0.3,
-      diffuseLightAmount: 0.89,
-      specularLightAmount: 0.16,
+      lightColor: (context, props) => props && props.rendering && props.rendering.lightColor ? props.rendering.lightColor : [1, 0.8, 0],
+      ambientLightAmount: (context, props) => props && props.rendering && props.rendering.ambientLightAmount ? props.rendering.ambientLightAmount : 0.3,
+      diffuseLightAmount: (context, props) => props && props.rendering && props.rendering.diffuseLightAmount ? props && props.rendering && props.rendering.diffuseLightAmount : 0.89,
+      specularLightAmount: (context, props) => props && props.rendering && props.rendering.specularLightAmount ? props.rendering.specularLightAmount : 0.16,
+      uMaterialShininess: (context, props) => props && props.rendering && props.rendering.materialShininess ? props.rendering.materialShininess : 8.0,
       materialAmbient: [0.5, 0.8, 0.3],
       materialDiffuse: [0.5, 0.8, 0.3],
-      materialSpecular: [0.5, 0.8, 0.3],
-      uMaterialShininess: 8.0
+      materialSpecular: [0.5, 0.8, 0.3]
     },
     framebuffer: fbo
   }
