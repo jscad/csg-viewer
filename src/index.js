@@ -17,7 +17,6 @@ const makeCsgViewer = function (container, options = {}) {
     camera: require('./cameraAndControls/perspectiveCamera').defaults,
     controls: require('./cameraAndControls/orbitControls').defaults,
     //
-    meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags
     overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
     lighting: {
       smooth: false
@@ -32,6 +31,7 @@ const makeCsgViewer = function (container, options = {}) {
     },
     rendering: {
       background: [1, 1, 1, 1],
+      meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags      
       lightDirection: [0.2, 0.2, 1],
       lightPosition: [100, 200, 100],
       ambientLightAmount: 0.3,

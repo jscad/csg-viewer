@@ -36,9 +36,7 @@ const prepareRender = (regl, params) => {
 
   let command = (props) => {
     // console.log('params in render', props)
-    const {meshColor, camera} = props
-
-    const color = meshColor
+    const {camera} = props
     const useVertexColors = !props.overrideOriginalColors
 
     renderWrapper(regl)(props, context => {
@@ -50,7 +48,7 @@ const prepareRender = (regl, params) => {
         const entity = entities[index]
         const primitive = entity.type === '2d' ? 'lines' : 'triangles'
         const model = entity.transforms.matrix
-        drawCSG({color, primitive, useVertexColors, camera, model})
+        drawCSG({color:props.rendering.meshColor, primitive, useVertexColors, camera, model})
       })
       // drawTest({color: [1, 0, 0, 1], model: mat4.translate(mat4.create(), mat4.identity([]), [100, 0, 200])})
       if (props.grid.show) {
