@@ -1,11 +1,12 @@
 const {pointerGestures} = require('most-gestures')
+const most = require('most')
+const {proxy} = require('most-proxy')
 const {holdSubject} = require('./observable-utils/most-subject/index')
 // require('most-subject')github:briancavalier/most-subject : issues with webpack hence the above
 const makeCameraControlsActions = require('./cameraControlsActions')
 const makeDataParamsActions = require('./dataParamsActions')
 const makeState = require('./state')
 const {merge} = require('./utils')
-const most = require('most')
 const prepareRender = require('./rendering/render')
 
 const makeCsgViewer = function (container, options = {}) {
@@ -31,7 +32,7 @@ const makeCsgViewer = function (container, options = {}) {
     },
     rendering: {
       background: [1, 1, 1, 1],
-      meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags      
+      meshColor: [1, 0.5, 0.5, 1], // use as default face color for csgs, color for cags
       lightDirection: [0.2, 0.2, 1],
       lightPosition: [100, 200, 100],
       ambientLightAmount: 0.3,
@@ -60,7 +61,8 @@ const makeCsgViewer = function (container, options = {}) {
   const params$ = holdSubject()
   const data$ = holdSubject()
   const errors$ = holdSubject()
-  // const state$ = most.just(state)
+  const { attach, stream } = proxy()
+  const state$ = stream
 
   // initialize when container changes
   const regl = require('regl')({
@@ -82,12 +84,13 @@ const makeCsgViewer = function (container, options = {}) {
     gestures: pointerGestures(container),
     resizes$: require('./cameraAndControls/elementSizing')(container),
     params$: params$.filter(x => x !== undefined), // we filter out pointless data from the get go
-    data$: data$.filter(x => x !== undefined)// we filter out pointless data from the get go
+    data$: data$.filter(x => x !== undefined), // we filter out pointless data from the get go
+    state$ // thanks to proxying, we also have access to the state observable/stream inside our actions
   }
   const cameraControlsActions = makeCameraControlsActions(sources$)
   const dataParamsActions = makeDataParamsActions(sources$)
   const actions = most.mergeArray(dataParamsActions.concat(cameraControlsActions))
-  const state$ = makeState(actions, state, regl)
+  attach(makeState(actions, state, regl)) // loop back state
 
   // re-render whenever state changes, since visuals are a function of the state
   state$.forEach(state => state.render(state))

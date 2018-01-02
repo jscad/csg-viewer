@@ -3,10 +3,10 @@ const {rafStream} = require('./observable-utils/rafStream')
 const limitFlow = require('./observable-utils/limitFlow')
 
 function actions (sources) {
-  const {gestures, resizes$, params$, data$} = sources
+  const {gestures, resizes$, params$, data$, state$} = sources
 
   const keyDowns$ = most.fromEvent('keydown', document)
-  keyDowns$.forEach(e => console.log('keydown', e))
+  // keyDowns$.forEach(e => console.log('keydown', e))
 
   let rotations$ = gestures.drags
   .filter(x => x !== undefined) // TODO: add this at gestures.drags level
@@ -65,8 +65,25 @@ function actions (sources) {
   ])
   .multicast()
 
-  let toFrontView$ = keyDowns$
-    .filter(event => event.key === 'f')
+  let toFrontView$ = most.sample(function (event, state) {
+    const ctrl = event.ctrlKey ? 'ctrl+' : ''
+    const shift = event.shiftKey ? 'shift+' : ''
+    const meta = event.metaKey ? 'command+' : ''
+    let key = event.key.toLowerCase()
+    if (ctrl && key === 'control') {
+      key = ''
+    }
+    if (shift && key === 'shift') {
+      key = ''
+    }
+    if (meta && key === 'meta') {
+      key = ''
+    }
+    const compositeKey = `${ctrl}${shift}${meta}${key}`
+    // console.log('compositeKey', compositeKey)
+    return compositeKey === state.shortcuts['toFrontView']
+  }, keyDowns$, keyDowns$, state$)
+  .filter(x => x === true)
 
   let toBackView$ = keyDowns$
     .filter(event => event.key === 'b')
@@ -109,7 +126,7 @@ function actions (sources) {
     toRightView$.map(data => ({type: 'toRightView', data})),
 
     toPerspectiveView$.map(data => ({type: 'toPerspectiveView', data})),
-    toOrthoView$.map(data => ({type: 'toOrthoView', data})),
+    toOrthoView$.map(data => ({type: 'toOrthoView', data}))
   ]
 }
 
