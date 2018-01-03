@@ -15,7 +15,7 @@ function makeReducers (initialState, regl) {
     updateParams: (state, data) => {
       // console.log('updateParams', data)
       if ('camera' in data) {
-        // console.log('camera')
+        // to enable camera positiong from preset names
         if (data.camera && data.camera.position && !Array.isArray(data.camera.position)) {
           const {toPresetView} = require('./cameraAndControls/camera')
           const viewPresets = ['top', 'bottom', 'front', 'back', 'left', 'right']
