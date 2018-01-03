@@ -9,7 +9,7 @@ const makeState = require('./state')
 const {merge} = require('./utils')
 const prepareRender = require('./rendering/render')
 
-const makeCsgViewer = function (container, options = {}) {
+const makeCsgViewer = function (container, options = {}, inputs$ = most.never()) {
   const defaults = {
     glOptions: {// all lower level webgl options passed directly through regl
       alpha: false
@@ -17,7 +17,6 @@ const makeCsgViewer = function (container, options = {}) {
     // after this , initial params of camera, controls & render
     camera: require('./cameraAndControls/perspectiveCamera').defaults,
     controls: require('./cameraAndControls/orbitControls').defaults,
-    //
     overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
     lighting: {
       smooth: false
@@ -40,15 +39,23 @@ const makeCsgViewer = function (container, options = {}) {
       specularLightAmount: 0.16,
       materialShininess: 8.0
     },
-    shortcuts: {
-      toFrontView: 'f',
-      toBackView: 'b',
-      toTopView: 't',
-      toBottomView: 'g',
-      toLeftView: 'l',
-      toRightView: 'r',
-      toPerspectiveView: 'p',
-      toOrthoView: 'o'
+    shortcuts: [
+      {key: 'f', command: 'toFrontView'},
+      {key: 'b', command: 'toBackView'},
+      {key: 't', command: 'toTopView'},
+
+      {key: 'b', command: 'toBottomView'},
+      {key: 'l', command: 'toLeftView'},
+      {key: 'r', command: 'toRightView'},
+
+      {key: 'p', command: 'toPerspectiveView'},
+      {key: 'o', command: 'toOrthoView'}
+    ],
+    //
+    behaviours: {
+      resetViewOn: ['new-entities'],
+      zoomToFitOn: ['new-entities'],
+      useGestures: true // toggle if you want to use external inputs to control camera etc
     },
     //
     entities: [], // inner representation of the CSG's geometry + meta (bounds etc)
@@ -81,6 +88,7 @@ const makeCsgViewer = function (container, options = {}) {
   state.render = prepareRender(regl, state)
 
   const sources$ = {
+    inputs$: inputs$.filter(x => x !== undefined), // custom user inputs
     gestures: pointerGestures(container),
     resizes$: require('./cameraAndControls/elementSizing')(container),
     params$: params$.filter(x => x !== undefined), // we filter out pointless data from the get go
