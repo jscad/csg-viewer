@@ -121,7 +121,8 @@ function actions (sources) {
     }, {})
     const keyAndCommand = head(state.shortcuts.filter(shortcut => shortcut.key === compositeKey))
     const validShortCut = !keyAndCommand ? false : Object.keys(shortCutToViewName).includes(keyAndCommand.command)
-    return {validShortCut, viewName: shortCutToViewName[keyAndCommand.command]}
+    const viewName = !keyAndCommand ? undefined : shortCutToViewName[keyAndCommand.command]
+    return {validShortCut, viewName}
   }, keyDowns$, keyDowns$, state$)
     .filter(x => x.validShortCut === true)
     .map(data => ({type: 'toPresetView', data: data.viewName}))
@@ -132,7 +133,7 @@ function actions (sources) {
   let toOrthoView$ = keyDowns$
     .filter(event => event.key === 'o')
 
-  const update$ = rafStream()// .thru(limitFlow(20))
+  const update$ = rafStream().thru(limitFlow(33))
     .map(_ => ({type: 'update', data: undefined}))
 
   return [
