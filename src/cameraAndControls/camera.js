@@ -32,54 +32,6 @@ function fromPerspectiveToOrthographic (perspecitveCamera, orthographicCamera) {
   return Object.assign({}, orthographicCamera, {left, right, top, bottom, target})
 }
 
-function toFrontView ({camera}) {
-  const offsetToTarget = vec3.distance(camera.position, camera.target)
-  const position = vec3.add([], [0, offsetToTarget, 0], camera.target)
-  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
-
-  return {view, position}
-}
-
-function toBackView ({camera}) {
-  const offsetToTarget = vec3.distance(camera.position, camera.target)
-  const position = vec3.add([], [0, -offsetToTarget, 0], camera.target)
-  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
-
-  return {view, position}
-}
-
-function toTopView ({camera}) {
-  const offsetToTarget = vec3.distance(camera.position, camera.target)
-  const position = vec3.add([], [0, 0, offsetToTarget], camera.target)
-  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
-
-  return {view, position}
-}
-
-function toBottomView ({camera}) {
-  const offsetToTarget = vec3.distance(camera.position, camera.target)
-  const position = vec3.add([], [0, 0, -offsetToTarget], camera.target)
-  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
-
-  return {view, position}
-}
-
-function toLeftView ({camera}) {
-  const offsetToTarget = vec3.distance(camera.position, camera.target)
-  const position = vec3.add([], [offsetToTarget, 0, 0], camera.target)
-  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
-
-  return {view, position}
-}
-
-function toRightView ({camera}) {
-  const offsetToTarget = vec3.distance(camera.position, camera.target)
-  const position = vec3.add([], [-offsetToTarget, 0, 0], camera.target)
-  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
-
-  return {view, position}
-}
-
 function toPerspectiveView ({camera}) {
   const offsetToTarget = vec3.distance(camera.position, camera.target)
   const distance = offsetToTarget
@@ -89,9 +41,22 @@ function toPerspectiveView ({camera}) {
   return {view, position}
 }
 
-module.exports = {toFrontView, toBackView, toTopView, toBottomView, toRightView, toLeftView, toPerspectiveView}
-/* var offset = this.position.clone().sub(this.target)
-var nPost = new THREE.Vector3()
-nPost.y = -offset.length()
-this.position.copy(nPost)
-this.lookAt(this.target) */
+function toPresetView (viewName, {camera}) {
+  const presets = {
+    'top': [0, 0, 1],
+    'bottom': [0, 0, -1],
+    'front': [0, 1, 0],
+    'back': [0, -1, 0],
+    'left': [1, 0, 0],
+    'right': [-1, 0, 0],
+    undefined: [0, 0, 0]
+  }
+
+  const offsetToTarget = vec3.distance(camera.position, camera.target)
+  const position = vec3.add([], presets[viewName].map(x => x * offsetToTarget), camera.target)
+  const view = mat4.lookAt(mat4.create(), position, camera.target, camera.up)
+
+  return {view, position}
+}
+
+module.exports = {toPerspectiveView, toPresetView}
