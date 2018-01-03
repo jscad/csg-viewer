@@ -17,14 +17,11 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
     // after this , initial params of camera, controls & render
     camera: require('./cameraAndControls/perspectiveCamera').defaults,
     controls: require('./cameraAndControls/orbitControls').defaults,
-    overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
-    lighting: {
-      smooth: false
-    },
+    //
     grid: {
       show: false,
       color: [1, 1, 1, 1],
-      fadeOut: true
+      fadeOut: true // when set to true, the grid fades out progressively in the distance
     },
     axes: {
       show: true
@@ -57,6 +54,9 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
       zoomToFitOn: ['new-entities'],
       useGestures: true // toggle if you want to use external inputs to control camera etc
     },
+    // next few are for solids / csg/ cags specifically
+    overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
+    smoothNormals: true,
     //
     entities: [], // inner representation of the CSG's geometry + meta (bounds etc)
     csgCheck: false // not used currently
