@@ -131,12 +131,12 @@ function update ({controls, camera}) {
 
   // view = newMatrix
   return {
-    changed: positionChanged,
     // controls state
     controls: {
       thetaDelta: curThetaDelta * dragEffect,
       phiDelta: curPhiDelta * dragEffect,
-      scale: 1
+      scale: 1,
+      changed: positionChanged
     },
     // camera state
     camera: {
