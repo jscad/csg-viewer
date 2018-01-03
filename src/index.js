@@ -20,6 +20,8 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
     //
     grid: {
       show: false,
+      size: [200, 200],
+      ticks: [10, 1],
       color: [1, 1, 1, 1],
       fadeOut: true // when set to true, the grid fades out progressively in the distance
     },
@@ -59,11 +61,14 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
     smoothNormals: true,
     //
     entities: [], // inner representation of the CSG's geometry + meta (bounds etc)
-    csgCheck: false // not used currently
+    csgCheck: false, // not used currently
+    // draw commands
+    drawCommands: {
+    }
   }
   let state = merge({}, defaults, options)
 
-  // we use an observable of parameters to play nicely with the other observables
+  // we use an observable of parameters, date etc to play nicely with the other observables
   // note: subjects are anti patterns, but they simplify things here so ok for now
   const params$ = holdSubject()
   const data$ = holdSubject()
@@ -79,13 +84,14 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
       if (err) {
         errors$.next(err)
       }
-      // console.error('foo', err)
-      // console.log('all ok', callback)
     }
   })
 
   // note we keep the render function around, until we need to swap it out in case of new data
   state.render = prepareRender(regl, state)
+  state.regl = regl
+  state.drawCommands.drawGrid = () => {}
+  state.drawCommands.drawCSGs = []
 
   const sources$ = {
     inputs$: inputs$.filter(x => x !== undefined), // custom user inputs
@@ -102,6 +108,8 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
 
   // re-render whenever state changes, since visuals are a function of the state
   state$.forEach(state => state.render(state))
+  // dispatch initial params/state
+  params$.next(state)
 
   /** main viewer function : call this one with different parameters and/or data to update the viewer
    * @param  {Object} options={}
