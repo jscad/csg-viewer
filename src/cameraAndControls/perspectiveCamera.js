@@ -13,7 +13,8 @@ const cameraState = {
   target: [0, 0, 0],
   fov: Math.PI / 4,
   aspect: 1,
-  viewport: [0, 0, 0, 0]
+  viewport: [0, 0, 0, 0],
+  projectionType: 'perspective'
 }
 
 const cameraProps = {

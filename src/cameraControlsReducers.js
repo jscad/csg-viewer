@@ -1,7 +1,7 @@
 const {update, rotate, zoom, pan, zoomToFit, reset} = require('./cameraAndControls/orbitControls')
 const {setProjection} = require('./cameraAndControls/perspectiveCamera')
 const {merge} = require('./utils')
-const {toPresetView, toPerspectiveView} = require('./cameraAndControls/camera')
+const {toPresetView, fromPerspectiveToOrthographic, fromOrthographicToPerspective} = require('./cameraAndControls/camera')
 
 function makeReducers (initialState) {
   // make sure to actually save the initial state, as it might get mutated
@@ -36,8 +36,21 @@ function makeReducers (initialState) {
       const newState = merge({}, state, {camera: toPresetView(viewName, state)})
       return newState
     },
-    toPerspectiveView: (state, params) => {
-      return merge({}, state, {camera: toPerspectiveView(state)})
+    setProjectionType: (state, projectionType) => {
+      console.log('setProjectionType', projectionType)
+      if (projectionType === 'orthographic' && state.camera.projectionType === 'perspective') {
+        const camera = fromPerspectiveToOrthographic(state.camera)
+        const newState = merge({}, state, {camera})
+        console.log(newState.camera)
+        return newState
+      }
+      if (projectionType === 'perspective' && state.camera.projectionType === 'orthographic') {
+        const camera = fromOrthographicToPerspective(state.camera)
+        const newState = merge({}, state, {camera})
+        console.log(newState.camera)
+        return newState
+      }
+      return state
     },
     toOrthoView: (state, params) => {
       return merge({}, state, {})

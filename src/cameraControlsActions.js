@@ -129,9 +129,16 @@ function actions (sources) {
 
   let toPerspectiveView$ = keyDowns$
     .filter(event => event.key === 'p')
+    .map(data => ({type: 'setProjectionType', data: 'perspective'}))
 
   let toOrthoView$ = keyDowns$
     .filter(event => event.key === 'o')
+    .map(data => ({type: 'setProjectionType', data: 'orthographic'}))
+
+  let projectionType$ = most.mergeArray([
+    toPerspectiveView$,
+    toOrthoView$
+  ])
 
   const update$ = rafStream().thru(limitFlow(33))
     .map(_ => ({type: 'update', data: undefined}))
@@ -146,8 +153,7 @@ function actions (sources) {
     update$,
 
     toPresetView$,
-    toPerspectiveView$.map(data => ({type: 'toPerspectiveView', data})),
-    toOrthoView$.map(data => ({type: 'toOrthoView', data}))
+    projectionType$
   ]
 }
 

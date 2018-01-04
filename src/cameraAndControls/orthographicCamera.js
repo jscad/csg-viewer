@@ -14,7 +14,8 @@ const cameraState = {
   fov: Math.PI / 4,
   aspect: 1,
   viewport: [0, 0, 0, 0],
-  zoom: 1
+  zoom: 1,
+  projectionType: 'orthographic'
 }
 
 const cameraProps = {
@@ -28,9 +29,13 @@ function setProjection (camera, input) {
   const viewport = [0, 0, width, height]
   const multiplier = camera.zoom
   console.log('zoom', multiplier)
-  const projection = mat4.ortho([],
-    -width * multiplier, width * multiplier,
-    -height * multiplier, height * multiplier, camera.near, camera.far)
+
+  const left = -width * multiplier
+  const right = width * multiplier
+  const bottom = -height * multiplier
+  const top = height * multiplier
+
+  const projection = mat4.ortho([], left, right, bottom, top, camera.near, camera.far)
   return {projection, aspect, viewport}
 }
 

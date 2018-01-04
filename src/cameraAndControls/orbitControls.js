@@ -199,8 +199,13 @@ function zoom ({controls, camera}, zoomDelta = 0) {
       scale += zoomDelta
     }
     // for ortho cameras
-    if (camera.zoom) {
-      camera = {zoom: camera.zoom += zoomDelta * 0.5}
+    if (camera.projectionType === 'orthographic') {
+      const distance = vec3.length(vec3.subtract([], camera.position, camera.target)) * 0.3
+      const width = Math.tan(camera.fov) * distance * camera.aspect
+      const height = Math.tan(camera.fov) * distance
+
+      const projection = require('./orthographicCamera').setProjection(camera, {width, height})
+      camera = projection
     }
 
     /* if (controls.autoAdjustPlanes) {

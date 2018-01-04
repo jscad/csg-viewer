@@ -30,6 +30,12 @@ function makeReducers (initialState, regl) {
             throw new Error(`Unhandled camera position "${data.camera.position}" passed to viewer`)
           }
         }
+        if (data.camera && data.camera.projectionType) {
+          const validTypes = ['orthographic', 'perspective']
+          if (!validTypes.includes(data.camera.projectionType)) {
+            throw new Error(`Unhandled camera projection type "${data.camera.projectionType}" passed to viewer`)
+          }
+        }
       }
       if ('grid' in data) {
         if (data.grid && data.grid.size) {
