@@ -91,6 +91,8 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
         if (err) {
           errors$.next(err)
         }
+      }
+    }
   )
   const regl = require('regl')(reglOptions)
 
