@@ -1,6 +1,5 @@
 const makeCsgViewer = require('../src/index')
 const {cube} = require('@jscad/scad-api').primitives3d
-const {color} = require('@jscad/scad-api').color
 
 const initializeData = function () {
   return cube({size: 100 * Math.random()})
@@ -14,8 +13,8 @@ const viewerOptions = {
     meshColor: [0.4, 0.6, 0.5, 1]
   },
   grid: {
-    display: true,
-    color: [1, 1, 1, 0.1]
+    show: true,
+    color: [1, 1, 1, 1]
   },
   camera: {
     position: [450, 550, 700]
@@ -64,3 +63,43 @@ setTimeout(function (t) {
 setTimeout(function (t) {
   csgViewer({controls: {autoRotate: {enabled: true}}})
 }, 15000)
+
+/* setTimeout(function (t) {
+  csgViewer({camera: {position: 'top'}})
+}, 2000)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'bottom'}})
+}, 2500)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'front'}})
+}, 3000)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'back'}})
+}, 3500)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'left'}})
+}, 4000)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'right'}})
+}, 4500)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'goomba'}})
+}, 5500) */
+
+setTimeout(function (t) {
+  csgViewer({grid: {size: [90, 90], display: true}})
+}, 2500)
+
+setTimeout(function (t) {
+  csgViewer({grid: {size: [200, 20], display: true, fadeout: true}})
+}, 5500)
+
+setTimeout(function (t) {
+  csgViewer({grid: {size: [800, 800], display: true, fadeout: true}})
+}, 6500)
