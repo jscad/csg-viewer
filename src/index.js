@@ -9,10 +9,13 @@ const makeState = require('./state')
 const {merge} = require('./utils')
 const prepareRender = require('./rendering/render')
 
-const makeCsgViewer = function (container, options = {}, inputs$ = most.never()) {
+// FIXME : element needs to be either canvas, other htmlelement or gl context
+const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
   const defaults = {
-    glOptions: {// all lower level webgl options passed directly through regl
-      alpha: false
+    glOptions: {// all lower level regl options passed directly through, webgl ones are under attributes
+      attributes: {
+        alpha: false
+      }
     },
     // after this , initial params of camera, controls & render
     camera: require('./cameraAndControls/perspectiveCamera').defaults,
@@ -52,8 +55,8 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
     ],
     //
     behaviours: {
-      resetViewOn: ['new-entities'],
-      zoomToFitOn: ['new-entities'],
+      resetViewOn: [], // ['new-entities'],
+      zoomToFitOn: [], // ['new-entities'],
       useGestures: true // toggle if you want to use external inputs to control camera etc
     },
     // next few are for solids / csg/ cags specifically
@@ -76,16 +79,22 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
   const { attach, stream } = proxy()
   const state$ = stream
 
-  // initialize when container changes
-  const regl = require('regl')({
-    container,
-    attributes: state.glOptions,
-    onDone: function (err, callback) {
-      if (err) {
-        errors$.next(err)
+  // initialize regl options
+  const reglOptions = Object.assign(
+    {}, {
+      canvas: (element.nodeName.toLowerCase() === 'canvas') ? element : undefined,
+      container: (element.nodeName.toLowerCase() !== 'canvas') ? element : undefined
+    },
+   state.glOptions,
+    {
+      onDone: function (err, callback) {
+        if (err) {
+          errors$.next(err)
+        }
       }
     }
-  })
+  )
+  const regl = require('regl')(reglOptions)
 
   // note we keep the render function around, until we need to swap it out in case of new data
   state.render = prepareRender(regl, state)
@@ -95,8 +104,8 @@ const makeCsgViewer = function (container, options = {}, inputs$ = most.never())
 
   const sources$ = {
     inputs$: inputs$.filter(x => x !== undefined), // custom user inputs
-    gestures: pointerGestures(container),
-    resizes$: require('./cameraAndControls/elementSizing')(container),
+    gestures: pointerGestures(element),
+    resizes$: require('./cameraAndControls/elementSizing')(element),
     params$: params$.filter(x => x !== undefined), // we filter out pointless data from the get go
     data$: data$.filter(x => x !== undefined), // we filter out pointless data from the get go
     state$ // thanks to proxying, we also have access to the state observable/stream inside our actions
