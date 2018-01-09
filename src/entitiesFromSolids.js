@@ -6,6 +6,8 @@ const computeBounds = require('./bound-utils/computeBounds')
 const areCSGsIdentical = require('./csg-utils/areCSGsIdentical')
 
 function entitiesFromSolids (baseParams, solids) {
+  const defaultColor = baseParams.rendering.meshColor
+
   solids = toArray(solids)
   // warning !!! fixTJunctions alters the csg and can result in visual issues ??
   // .fixTJunctions()
@@ -17,13 +19,13 @@ function entitiesFromSolids (baseParams, solids) {
     let type
     if ('sides' in solid) {
       type = '2d'
-      geometry = cagToGeometries(solid, {color: baseParams.meshColor})
+      geometry = cagToGeometries(solid, {color: defaultColor})
     } else {
       type = '3d'
       geometry = csgToGeometries(solid, {
         smoothLighting: baseParams.smoothNormals,
         normalThreshold: 0.3,
-        faceColor: baseParams.rendering.meshColor})//, normalThreshold: 0})
+        faceColor: defaultColor})//, normalThreshold: 0})
     }
     // geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays since a single csg can
     // generate multiple geometries if positions count is >65535
