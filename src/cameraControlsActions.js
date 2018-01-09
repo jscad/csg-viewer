@@ -53,14 +53,21 @@ function actions (sources) {
   let reset$ = most.mergeArray([
     gestures.taps
       .filter(taps => taps.nb === 2)
-      .map(data => ({type: 'reset', data}))
       .multicast(),
     state$
       .filter(state => state.behaviours.resetViewOn.includes('new-entities'))
       .map(state => state.entities).skipRepeatsWith(areEntitiesIdentical)
-      .map(_ => ({type: 'reset', data: {origin: 'new-entities'}}))
-      .multicast().tap(x => console.log('reset on new entities'))
-  ]).multicast()
+      .map(_ => ({origin: 'new-entities'})),
+    params$
+      .filter(params => {
+        return params.camera && params.camera === 'reset'
+        // params === {camera: 'reset'})
+      })
+      .map(x => ({origin: 'request'}))
+  ])
+  .map(data => ({type: 'reset', data}))
+  .multicast()
+  .tap(x => console.log('gna', x))
 
   function areEntitiesIdentical (previous, current) {
     // console.log('areEntitiesIdentical', previous, current)

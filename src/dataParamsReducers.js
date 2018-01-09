@@ -17,6 +17,10 @@ function makeReducers (initialState, regl) {
       }
     },
     updateParams: (state, data) => {
+      console.log('updateParams', data)
+      if (data.camera && data.camera === 'reset') {
+        return state
+      }
       // console.log('updateParams', data)
       if ('camera' in data) {
         // to enable camera position from preset names
