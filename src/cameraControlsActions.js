@@ -3,25 +3,29 @@ const {rafStream} = require('./observable-utils/rafStream')
 const limitFlow = require('./observable-utils/limitFlow')
 
 function actions (sources) {
-  const {gestures, resizes$, params$, data$} = sources
+  const {gestures, params$, data$, state$} = sources
 
   const keyDowns$ = most.fromEvent('keydown', document)
-  keyDowns$.forEach(e => console.log('keydown', e))
+  // keyDowns$.forEach(e => console.log('keydown', e))
+
+  const resizes$ = sources.resizes$
+    .map(data => ({type: 'resize', data}))
+    .multicast()
 
   let rotations$ = gestures.drags
-  .filter(x => x !== undefined) // TODO: add this at gestures.drags level
-  .map(function (data) {
-    let delta = [data.delta.x, data.delta.y]
-    const {shiftKey} = data.originalEvents[0]
-    if (!shiftKey) {
-      return delta
-    }
-    return undefined
-  })
-  .filter(x => x !== undefined)
-  .map(delta => delta.map(d => d * -Math.PI))
-  .map(data => ({type: 'rotate', data}))
-  .multicast()
+    .filter(x => x !== undefined) // TODO: add this at gestures.drags level
+    .map(function (data) {
+      let delta = [data.delta.x, data.delta.y]
+      const {shiftKey} = data.originalEvents[0]
+      if (!shiftKey) {
+        return delta
+      }
+      return undefined
+    })
+    .filter(x => x !== undefined)
+    .map(delta => delta.map(d => d * -Math.PI))
+    .map(data => ({type: 'rotate', data}))
+    .multicast()
 
   let pan$ = gestures.drags
   .filter(x => x !== undefined) // TODO: add this at gestures.drags level
@@ -38,58 +42,112 @@ function actions (sources) {
   .multicast()
 
   let zoom$ = gestures.zooms
-  .startWith(0) // TODO: add this at gestures.zooms level
-  .map(x => -x) // we invert zoom direction
-  .filter(x => !isNaN(x)) // TODO: add this at gestures.zooms level
-  .skip(1)
-  .map(data => ({type: 'zoom', data}))
-  .multicast()
+    .startWith(0) // TODO: add this at gestures.zooms level
+    .map(x => -x) // we invert zoom direction
+    .filter(x => !isNaN(x)) // TODO: add this at gestures.zooms level
+    .skip(1)
+    .map(data => ({type: 'zoom', data}))
+    .multicast()
 
-// Reset view with a double tap
-  let reset$ = gestures.taps
-  .filter(taps => taps.nb === 2)
-  .sample(params => params, params$)
+// Reset view with a double tap/ when data changed
+  let reset$ = most.mergeArray([
+    gestures.taps
+      .filter(taps => taps.nb === 2)
+      .multicast(),
+    state$
+      .filter(state => state.behaviours.resetViewOn.includes('new-entities'))
+      .map(state => state.entities).skipRepeatsWith(areEntitiesIdentical)
+      .map(_ => ({origin: 'new-entities'})),
+    params$
+      .filter(params => {
+        return params.camera && params.camera === 'reset'
+        // params === {camera: 'reset'})
+      })
+      .map(x => ({origin: 'request'}))
+  ])
   .map(data => ({type: 'reset', data}))
   .multicast()
+  .tap(x => console.log('gna', x))
 
-  const onFirstStart$ = resizes$.take(1).multicast() // there is an initial resize event, that we reuse
+  function areEntitiesIdentical (previous, current) {
+    // console.log('areEntitiesIdentical', previous, current)
+    if (current.length !== previous.length) {
+      return false
+    }
+    for (let i = 0; i < current.length; i++) {
+      if (current[i].geometry.positions.length !== previous[i].geometry.positions.length) {
+        return false
+      }
+    }
 
+    return true
+  }
 // zoomToFit main mesh bounds
   const zoomToFit$ = most.mergeArray([
     gestures.taps.filter(taps => taps.nb === 3)
-      .map(_ => ({type: 'zoomToFit', data: {when: 'demand'}})),
-    onFirstStart$
-      .map(_ => ({type: 'zoomToFit', data: {origin: 'start'}})),
-    data$
-      .map(_ => ({type: 'zoomToFit', data: {origin: 'new-data'}}))
+      .map(_ => ({type: 'zoomToFit', data: {origin: 'demand'}})),
+    state$
+      .filter(state => state.behaviours.zoomToFitOn.includes('new-entities'))
+      .map(state => state.entities).skipRepeatsWith(areEntitiesIdentical)
+      .map(_ => ({type: 'zoomToFit', data: {origin: 'new-entities'}}))
+      .multicast().tap(x => console.log('zoomToFit on new entities'))
   ])
   .multicast()
 
-  let toFrontView$ = keyDowns$
-    .filter(event => event.key === 'f')
+  const head = (array) => {
+    if (array === undefined || null) {
+      return undefined
+    }
+    if (array.length === 0) {
+      return undefined
+    }
+    return array[0]
+  }
 
-  let toBackView$ = keyDowns$
-    .filter(event => event.key === 'b')
-
-  let toTopView$ = keyDowns$
-    .filter(event => event.key === 't')
-
-  let toBottomView$ = keyDowns$
-    .filter(event => event.key === 'g')
-
-  let toLeftView$ = keyDowns$
-    .filter(event => event.key === 'l')
-
-  let toRightView$ = keyDowns$
-    .filter(event => event.key === 'r')
+  let toPresetView$ = most.sample(function (event, state) {
+    const ctrl = event.ctrlKey ? 'ctrl+' : ''
+    const shift = event.shiftKey ? 'shift+' : ''
+    const meta = event.metaKey ? 'command+' : ''
+    let key = event.key.toLowerCase()
+    if (ctrl && key === 'control') {
+      key = ''
+    }
+    if (shift && key === 'shift') {
+      key = ''
+    }
+    if (meta && key === 'meta') {
+      key = ''
+    }
+    const compositeKey = `${ctrl}${shift}${meta}${key}`
+    // console.log('compositeKey', compositeKey, state.shortcuts[compositeKey])
+    const viewPresets = ['top', 'bottom', 'front', 'back', 'left', 'right']
+    const shortCutToViewName = viewPresets.reduce(function (acc, name, index) {
+      const shortCutName = `to${name[0].toUpperCase()}${name.slice(1)}View`
+      acc[shortCutName] = name
+      return acc
+    }, {})
+    const keyAndCommand = head(state.shortcuts.filter(shortcut => shortcut.key === compositeKey))
+    const validShortCut = !keyAndCommand ? false : Object.keys(shortCutToViewName).includes(keyAndCommand.command)
+    const viewName = !keyAndCommand ? undefined : shortCutToViewName[keyAndCommand.command]
+    return {validShortCut, viewName}
+  }, keyDowns$, keyDowns$, state$)
+    .filter(x => x.validShortCut === true)
+    .map(data => ({type: 'toPresetView', data: data.viewName}))
 
   let toPerspectiveView$ = keyDowns$
     .filter(event => event.key === 'p')
+    .map(data => ({type: 'setProjectionType', data: 'perspective'}))
 
   let toOrthoView$ = keyDowns$
     .filter(event => event.key === 'o')
+    .map(data => ({type: 'setProjectionType', data: 'orthographic'}))
 
-  const update$ = rafStream()
+  let projectionType$ = most.mergeArray([
+    toPerspectiveView$,
+    toOrthoView$
+  ])
+
+  const update$ = rafStream().thru(limitFlow(33))
     .map(_ => ({type: 'update', data: undefined}))
 
   return [
@@ -98,18 +156,11 @@ function actions (sources) {
     zoom$,
     reset$,
     zoomToFit$,
-    resizes$.map(data => ({type: 'resize', data})),
-    update$.thru(limitFlow(33)),
+    resizes$,
+    update$,
 
-    toFrontView$.map(data => ({type: 'toFrontView', data})),
-    toBackView$.map(data => ({type: 'toBackView', data})),
-    toTopView$.map(data => ({type: 'toTopView', data})),
-    toBottomView$.map(data => ({type: 'toBottomView', data})),
-    toLeftView$.map(data => ({type: 'toLeftView', data})),
-    toRightView$.map(data => ({type: 'toRightView', data})),
-
-    toPerspectiveView$.map(data => ({type: 'toPerspectiveView', data})),
-    toOrthoView$.map(data => ({type: 'toOrthoView', data})),
+    toPresetView$,
+    projectionType$
   ]
 }
 

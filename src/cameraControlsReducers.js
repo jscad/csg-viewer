@@ -1,7 +1,7 @@
 const {update, rotate, zoom, pan, zoomToFit, reset} = require('./cameraAndControls/orbitControls')
 const {setProjection} = require('./cameraAndControls/perspectiveCamera')
 const {merge} = require('./utils')
-const {toFrontView, toBackView, toTopView, toBottomView, toLeftView, toRightView, toPerspectiveView} = require('./cameraAndControls/camera')
+const {toPresetView, fromPerspectiveToOrthographic, fromOrthographicToPerspective} = require('./cameraAndControls/camera')
 
 function makeReducers (initialState) {
   // make sure to actually save the initial state, as it might get mutated
@@ -24,7 +24,6 @@ function makeReducers (initialState) {
       return merge({}, state, pan(state, delta))
     },
     zoomToFit: (state, when) => {
-      console.log('zoomToFIt', when)
       return merge({}, state, zoomToFit(state))
     },
     reset: (state, params) => {
@@ -33,28 +32,25 @@ function makeReducers (initialState) {
       resetState = zoomToFit(resetState)
       return resetState
     },
-
-    toFrontView: (state, params) => {
-      const newState = merge({}, state, {camera: toFrontView(state)})
+    toPresetView: (state, viewName) => {
+      const newState = merge({}, state, {camera: toPresetView(viewName, state)})
       return newState
     },
-    toBackView: (state, params) => {
-      return merge({}, state, {camera: toBackView(state)})
-    },
-    toTopView: (state, params) => {
-      return merge({}, state, {camera: toTopView(state)})
-    },
-    toBottomView: (state, params) => {
-      return merge({}, state, {camera: toBottomView(state)})
-    },
-    toLeftView: (state, params) => {
-      return merge({}, state, {camera: toLeftView(state)})
-    },
-    toRightView: (state, params) => {
-      return merge({}, state, {camera: toRightView(state)})
-    },
-    toPerspectiveView: (state, params) => {
-      return merge({}, state, {camera: toPerspectiveView(state)})
+    setProjectionType: (state, projectionType) => {
+      console.log('setProjectionType', projectionType)
+      if (projectionType === 'orthographic' && state.camera.projectionType === 'perspective') {
+        const camera = fromPerspectiveToOrthographic(state.camera)
+        const newState = merge({}, state, {camera})
+        console.log(newState.camera)
+        return newState
+      }
+      if (projectionType === 'perspective' && state.camera.projectionType === 'orthographic') {
+        const camera = fromOrthographicToPerspective(state.camera)
+        const newState = merge({}, state, {camera})
+        console.log(newState.camera)
+        return newState
+      }
+      return state
     },
     toOrthoView: (state, params) => {
       return merge({}, state, {})

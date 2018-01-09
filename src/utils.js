@@ -26,7 +26,7 @@ function merge (output = {}, currentState, options) {
       output[key] = options[key]
     } else if (isArray) {
       const current = currentState[key] || []
-      output[key] = Object.assign([], current, options[key])
+      output[key] = Object.assign([], ...current, options[key])
     } else if (isObject) {
       const current = currentState[key] || {}
       output[key] = merge({}, current, item)

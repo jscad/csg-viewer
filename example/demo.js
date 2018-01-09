@@ -1,6 +1,5 @@
 const makeCsgViewer = require('../src/index')
 const {cube} = require('@jscad/scad-api').primitives3d
-const {color} = require('@jscad/scad-api').color
 
 const initializeData = function () {
   return cube({size: 100 * Math.random()})
@@ -9,11 +8,13 @@ const initializeData = function () {
 // dark grid :  [1, 1, 1, 0.1],
 
 const viewerOptions = {
-  background: [0.211, 0.2, 0.207, 1], // [1, 1, 1, 1],//54, 51, 53
-  meshColor: [0.4, 0.6, 0.5, 1],
+  rendering: {
+    background: [0.211, 0.2, 0.207, 1], // [1, 1, 1, 1],//54, 51, 53
+    meshColor: [0.4, 0.6, 0.5, 1]
+  },
   grid: {
-    display: true,
-    color: [1, 1, 1, 0.1]
+    show: true,
+    color: [1, 1, 1, 1]
   },
   camera: {
     position: [450, 550, 700]
@@ -55,10 +56,50 @@ setTimeout(function (t) {
 // or different params AND different data
 setTimeout(function (t) {
   const csg = initializeData()
-  csgViewer({overrideOriginalColors: true, meshColor: [0.8, 0, 0, 1], background: [0.2, 1, 1, 1]}, {solids: csg})
+  csgViewer({overrideOriginalColors: true, rendering: {meshColor: [0.8, 0, 0, 1], background: [0.2, 1, 1, 1]}}, {solids: csg})
 }, 10000)
 
 // and again
 setTimeout(function (t) {
   csgViewer({controls: {autoRotate: {enabled: true}}})
 }, 15000)
+
+/* setTimeout(function (t) {
+  csgViewer({camera: {position: 'top'}})
+}, 2000)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'bottom'}})
+}, 2500)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'front'}})
+}, 3000)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'back'}})
+}, 3500)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'left'}})
+}, 4000)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'right'}})
+}, 4500)
+
+setTimeout(function (t) {
+  csgViewer({camera: {position: 'goomba'}})
+}, 5500) */
+
+setTimeout(function (t) {
+  csgViewer({grid: {size: [90, 90], display: true}})
+}, 2500)
+
+setTimeout(function (t) {
+  csgViewer({grid: {size: [200, 20], display: true, fadeout: true}})
+}, 5500)
+
+setTimeout(function (t) {
+  csgViewer({grid: {size: [800, 800], display: true, fadeout: true}})
+}, 6500)
