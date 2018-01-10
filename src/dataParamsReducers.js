@@ -17,7 +17,7 @@ function makeReducers (initialState, regl) {
       }
     },
     updateParams: (state, data) => {
-      console.log('updateParams', data)
+      // console.log('updateParams', data)
       if (data.camera && data.camera === 'reset') {
         return state
       }
@@ -35,9 +35,19 @@ function makeReducers (initialState, regl) {
           }
         }
         if (data.camera && data.camera.projectionType) {
+          const projectionType = data.camera.projectionType
           const validTypes = ['orthographic', 'perspective']
           if (!validTypes.includes(data.camera.projectionType)) {
             throw new Error(`Unhandled camera projection type "${data.camera.projectionType}" passed to viewer`)
+          }
+          const {fromPerspectiveToOrthographic, fromOrthographicToPerspective} = require('./cameraAndControls/camera')
+
+          if (projectionType === 'orthographic' && state.camera.projectionType === 'perspective') {
+            const camera = fromPerspectiveToOrthographic(state.camera)
+            data.camera = camera
+          } else if (projectionType === 'perspective' && state.camera.projectionType === 'orthographic') {
+            const camera = fromOrthographicToPerspective(state.camera)
+            data.camera = camera
           }
         }
       }
