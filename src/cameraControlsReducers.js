@@ -37,17 +37,15 @@ function makeReducers (initialState) {
       return newState
     },
     setProjectionType: (state, projectionType) => {
-      console.log('setProjectionType', projectionType)
+      // console.log('setProjectionType', projectionType)
       if (projectionType === 'orthographic' && state.camera.projectionType === 'perspective') {
         const camera = fromPerspectiveToOrthographic(state.camera)
         const newState = merge({}, state, {camera})
-        console.log(newState.camera)
         return newState
       }
       if (projectionType === 'perspective' && state.camera.projectionType === 'orthographic') {
         const camera = fromOrthographicToPerspective(state.camera)
         const newState = merge({}, state, {camera})
-        console.log(newState.camera)
         return newState
       }
       return state
