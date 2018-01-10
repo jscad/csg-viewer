@@ -1,4 +1,4 @@
-const {pointerGestures} = require('most-gestures')
+// const {pointerGestures} = require('most-gestures')
 const most = require('most')
 const {proxy} = require('most-proxy')
 const {holdSubject} = require('./observable-utils/most-subject/index')
@@ -41,23 +41,10 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
       specularLightAmount: 0.16,
       materialShininess: 8.0
     },
-    shortcuts: [
-      {key: 'f', command: 'toFrontView'},
-      {key: 'b', command: 'toBackView'},
-      {key: 't', command: 'toTopView'},
-
-      {key: 'b', command: 'toBottomView'},
-      {key: 'l', command: 'toLeftView'},
-      {key: 'r', command: 'toRightView'},
-
-      {key: 'p', command: 'toPerspectiveView'},
-      {key: 'o', command: 'toOrthoView'}
-    ],
     //
     behaviours: {
       resetViewOn: [], // ['new-entities'],
-      zoomToFitOn: [], // ['new-entities'],
-      useGestures: true // toggle if you want to use external inputs to control camera etc
+      zoomToFitOn: [] // ['new-entities'],
     },
     // next few are for solids / csg/ cags specifically
     overrideOriginalColors: false, // for csg/cag conversion: do not use the original (csg) color, use meshColor instead
@@ -66,8 +53,9 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
     entities: [], // inner representation of the CSG's geometry + meta (bounds etc)
     csgCheck: false, // not used currently
     // draw commands
-    drawCommands: {
-    }
+    drawCommands: {},
+
+    useGestures: true // toggle if you want to use external inputs to control camera etc
   }
   let state = merge({}, defaults, options)
 
@@ -103,20 +91,30 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
   state.drawCommands.drawCSGs = []
 
   const sources$ = {
-    inputs$: inputs$.filter(x => x !== undefined), // custom user inputs
-    gestures: pointerGestures(element),
-    resizes$: require('./cameraAndControls/elementSizing')(element),
-    params$: params$.filter(x => x !== undefined), // we filter out pointless data from the get go
+    // data streams
+    params$: params$.filter(x => x !== undefined).multicast(), // we filter out pointless data from the get go
     data$: data$.filter(x => x !== undefined), // we filter out pointless data from the get go
-    state$ // thanks to proxying, we also have access to the state observable/stream inside our actions
+    state$, // thanks to proxying, we also have access to the state observable/stream inside our actions
+    // inputs$: inputs$.filter(x => x !== undefined), // custom user inputs
+    // live ui elements only
+    gestures: state.useGestures ? require('most-gestures').pointerGestures(element) : {drags: most.never(), zooms: most.never(), taps: most.never()},
+    resizes$: state.useGestures ? require('./cameraAndControls/elementSizing')(element) : most.never(),
+    heartBeat$: require('./observable-utils/rafStream').rafStream() // state.useGestures ? require('./observable-utils/rafStream').rafStream() : most.never() // heartbeat provided by requestAnimationFrame
   }
+  // create our action streams
   const cameraControlsActions = makeCameraControlsActions(sources$)
   const dataParamsActions = makeDataParamsActions(sources$)
   const actions = most.mergeArray(dataParamsActions.concat(cameraControlsActions))
-  attach(makeState(actions, state, regl)) // loop back state
+  // combine proxy state & real state
+  attach(makeState(actions, state, regl))
 
+  // .startWith(state)
+  // skipRepeatsWith
   // re-render whenever state changes, since visuals are a function of the state
-  state$.forEach(state => state.render(state))
+  state$.forEach(state => {
+    // console.log('sending data for render', state)
+    state.render(state)
+  })
   // dispatch initial params/state
   params$.next(state)
 

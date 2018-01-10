@@ -1,16 +1,14 @@
 const most = require('most')
-const {rafStream} = require('./observable-utils/rafStream')
 const limitFlow = require('./observable-utils/limitFlow')
 
 function actions (sources) {
-  const {gestures, params$, data$, state$} = sources
-
-  const keyDowns$ = most.fromEvent('keydown', document)
-  // keyDowns$.forEach(e => console.log('keydown', e))
+  const {gestures, heartBeat$, params$, data$, state$} = sources
 
   const resizes$ = sources.resizes$
+    // .startWith({width: 600, height:400, aspect:1, brect:{}})
     .map(data => ({type: 'resize', data}))
     .multicast()
+    // .tap(x=>console.log('resizes',x))
 
   let rotations$ = gestures.drags
     .filter(x => x !== undefined) // TODO: add this at gestures.drags level
@@ -28,18 +26,18 @@ function actions (sources) {
     .multicast()
 
   let pan$ = gestures.drags
-  .filter(x => x !== undefined) // TODO: add this at gestures.drags level
-  .map(function (data) {
-    const delta = [data.delta.x, data.delta.y]
-    const {shiftKey} = data.originalEvents[0]
-    if (shiftKey) {
-      return delta
-    }
-    return undefined
-  })
-  .filter(x => x !== undefined)
-  .map(data => ({type: 'pan', data}))
-  .multicast()
+    .filter(x => x !== undefined) // TODO: add this at gestures.drags level
+    .map(function (data) {
+      const delta = [data.delta.x, data.delta.y]
+      const {shiftKey} = data.originalEvents[0]
+      if (shiftKey) {
+        return delta
+      }
+      return undefined
+    })
+    .filter(x => x !== undefined)
+    .map(data => ({type: 'pan', data}))
+    .multicast()
 
   let zoom$ = gestures.zooms
     .startWith(0) // TODO: add this at gestures.zooms level
@@ -48,6 +46,12 @@ function actions (sources) {
     .skip(1)
     .map(data => ({type: 'zoom', data}))
     .multicast()
+
+  const setProjectionType$ = params$
+    .filter(params => {
+      return params.camera && params.camera.projectionType
+    })
+    .map(data => ({type: 'setProjectionType', data: data.camera.projectionType}))
 
 // Reset view with a double tap/ when data changed
   let reset$ = most.mergeArray([
@@ -67,7 +71,6 @@ function actions (sources) {
   ])
   .map(data => ({type: 'reset', data}))
   .multicast()
-  .tap(x => console.log('gna', x))
 
   function areEntitiesIdentical (previous, current) {
     // console.log('areEntitiesIdentical', previous, current)
@@ -90,64 +93,11 @@ function actions (sources) {
       .filter(state => state.behaviours.zoomToFitOn.includes('new-entities'))
       .map(state => state.entities).skipRepeatsWith(areEntitiesIdentical)
       .map(_ => ({type: 'zoomToFit', data: {origin: 'new-entities'}}))
-      .multicast().tap(x => console.log('zoomToFit on new entities'))
+      // .multicast().tap(x => console.log('zoomToFit on new entities'))
   ])
   .multicast()
 
-  const head = (array) => {
-    if (array === undefined || null) {
-      return undefined
-    }
-    if (array.length === 0) {
-      return undefined
-    }
-    return array[0]
-  }
-
-  let toPresetView$ = most.sample(function (event, state) {
-    const ctrl = event.ctrlKey ? 'ctrl+' : ''
-    const shift = event.shiftKey ? 'shift+' : ''
-    const meta = event.metaKey ? 'command+' : ''
-    let key = event.key.toLowerCase()
-    if (ctrl && key === 'control') {
-      key = ''
-    }
-    if (shift && key === 'shift') {
-      key = ''
-    }
-    if (meta && key === 'meta') {
-      key = ''
-    }
-    const compositeKey = `${ctrl}${shift}${meta}${key}`
-    // console.log('compositeKey', compositeKey, state.shortcuts[compositeKey])
-    const viewPresets = ['top', 'bottom', 'front', 'back', 'left', 'right']
-    const shortCutToViewName = viewPresets.reduce(function (acc, name, index) {
-      const shortCutName = `to${name[0].toUpperCase()}${name.slice(1)}View`
-      acc[shortCutName] = name
-      return acc
-    }, {})
-    const keyAndCommand = head(state.shortcuts.filter(shortcut => shortcut.key === compositeKey))
-    const validShortCut = !keyAndCommand ? false : Object.keys(shortCutToViewName).includes(keyAndCommand.command)
-    const viewName = !keyAndCommand ? undefined : shortCutToViewName[keyAndCommand.command]
-    return {validShortCut, viewName}
-  }, keyDowns$, keyDowns$, state$)
-    .filter(x => x.validShortCut === true)
-    .map(data => ({type: 'toPresetView', data: data.viewName}))
-
-  let toPerspectiveView$ = keyDowns$
-    .filter(event => event.key === 'p')
-    .map(data => ({type: 'setProjectionType', data: 'perspective'}))
-
-  let toOrthoView$ = keyDowns$
-    .filter(event => event.key === 'o')
-    .map(data => ({type: 'setProjectionType', data: 'orthographic'}))
-
-  let projectionType$ = most.mergeArray([
-    toPerspectiveView$,
-    toOrthoView$
-  ])
-
-  const update$ = rafStream().thru(limitFlow(33))
+  const update$ = heartBeat$.thru(limitFlow(33))
     .map(_ => ({type: 'update', data: undefined}))
 
   return [
@@ -157,10 +107,10 @@ function actions (sources) {
     reset$,
     zoomToFit$,
     resizes$,
-    update$,
+    update$
 
-    toPresetView$,
-    projectionType$
+    // toPresetView$,
+    // setProjectionType$
   ]
 }
 
