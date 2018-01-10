@@ -1,8 +1,8 @@
 {
-  "name": "csg-viewer",
+  "name": "@jscad/csg-viewer",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "tape test.js",
     "dev": "budo example/demo.js --title csg-viewer --live --css example/demo.css -- -t glslify -t brfs",
