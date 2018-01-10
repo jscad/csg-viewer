@@ -57,10 +57,10 @@ const prepareRender = (regl, params) => {
     })
   }
   return function render (data) {
-    command(data)
-    // tick += 0.01
     // important for stats, correct resizing etc
     regl.poll()
+    command(data)
+    // tick += 0.01
   }
 }
 
