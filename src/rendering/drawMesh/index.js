@@ -43,7 +43,7 @@ uniform float diffuseLightAmount;
 uniform float specularLightAmount;
 
 uniform vec3 lightDirection;
-uniform vec3 lightColor;
+uniform vec4 lightColor;
 uniform vec3 opacity;
 uniform float uMaterialShininess;
 
@@ -60,14 +60,14 @@ void main () {
   vec4 depth = gl_FragCoord;
   vec4 endColor = vColor * vColorToggler + ucolor * (1.0 - vColorToggler);
 
-  vec3 ambient = ambientLightAmount * endColor.rgb; //ambientAo * 
+  vec3 ambient = ambientLightAmount * endColor.rgb ; //ambientAo * 
 
   float diffuseWeight = dot(surfaceNormal, lightDirection);
   vec3 diffuse = diffuseLightAmount * endColor.rgb * clamp(diffuseWeight , 0.0, 1.0 );
 
   //specular
   
-  vec4 specularColor = vec4(lightColor,1.0);
+  vec4 specularColor = vec4(lightColor);
   vec3 eyeDirection = normalize(surfacePosition.xyz);
   vec3 reflectionDirection = reflect(-lightDirection, surfaceNormal);
   float specularLightWeight = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
@@ -152,7 +152,7 @@ const drawMesh = function (regl, params = {extras: {}}) {
   }
   const {geometry, dynamicCulling, useVertexColors} = Object.assign({}, defaults, params)
 
-  let ambientOcclusion // = vao(geometry.indices, geometry.positions, 10, 1)
+  let ambientOcclusion // = vao(geometry.indices, geometry.positions, 64, 64)
   ambientOcclusion = regl.buffer([])
 
   // vertex colors or not ?
