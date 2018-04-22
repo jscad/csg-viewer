@@ -69,8 +69,44 @@ module.exports = function prepareDrawGrid (regl, params = {}) {
   }
 
   return regl({
-    vert: glslify(path.join(__dirname, '/../basic.vert')),
-    frag: glslify(path.join(__dirname, '/shaders/grid.frag')),
+    vert: `precision mediump float;
+
+    uniform float camNear, camFar;
+    uniform mat4 model, view, projection;
+    
+    attribute vec3 position;
+    varying vec3 fragNormal, fragPosition;
+    varying vec4 worldPosition;
+    
+    //#pragma glslify: zBufferAdjust = require('./zBufferAdjust')
+    
+    void main() {
+      //fragNormal = normal;
+      fragPosition = position;
+      worldPosition = model * vec4(position, 1);
+      vec4 glPosition = projection * view * worldPosition;
+      gl_Position = glPosition;
+      //gl_Position = zBufferAdjust(glPosition, camNear, camFar);
+    }`, // glslify(path.join(__dirname, '/../basic.vert')),
+    frag: `precision mediump float;
+    uniform vec4 color;
+    varying vec3 fragNormal, fragPosition;
+    varying vec4 worldPosition;
+    
+    uniform vec4 fogColor;
+    uniform bool fadeOut;
+    void main() {
+      float dist = .5;
+      if(fadeOut){
+        dist = distance( vec2(0.,0.), vec2(worldPosition.x, worldPosition.y));
+        dist *= 0.0025;
+        dist = sqrt(dist);
+        //dist = clamp(dist, 0.0, 1.0);
+      }
+    
+      gl_FragColor = mix(color, fogColor, dist);
+    }
+    `, // glslify(path.join(__dirname, '/shaders/grid.frag')),
 
     attributes: {
       position: regl.buffer(positions)
