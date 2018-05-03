@@ -9,6 +9,9 @@ const makeState = require('./state')
 const {merge} = require('./utils')
 const prepareRender = require('./rendering/render')
 
+const cameraDefaults = require('./cameraAndControls/perspectiveCamera').defaults
+const controlsDefaults = require('./cameraAndControls/orbitControls').defaults
+
 // FIXME : element needs to be either canvas, other htmlelement or gl context
 const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
   const defaults = {
@@ -17,9 +20,10 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
         alpha: false
       }
     },
-    // after this , initial params of camera, controls & render
-    camera: require('./cameraAndControls/perspectiveCamera').defaults,
-    controls: require('./cameraAndControls/orbitControls').defaults,
+    // after this , initial params of camera, controls & render,
+    // the object.assign is essential ! state is semi mutable !
+    camera: Object.assign({}, cameraDefaults),
+    controls: Object.assign({}, controlsDefaults),
     //
     grid: {
       show: false,
@@ -91,7 +95,7 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
   state.drawCommands.drawGrid = () => {}
   state.drawCommands.drawCSGs = []
 
-  const sources$ = {
+  const sources = {
     // data streams
     params$: params$.filter(x => x !== undefined).multicast(), // we filter out pointless data from the get go
     data$: data$.filter(x => x !== undefined), // we filter out pointless data from the get go
@@ -102,9 +106,10 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
     resizes$: state.useGestures ? require('./cameraAndControls/elementSizing')(element) : most.never(),
     heartBeat$: require('./observable-utils/rafStream').rafStream() // state.useGestures ? require('./observable-utils/rafStream').rafStream() : most.never() // heartbeat provided by requestAnimationFrame
   }
+
   // create our action streams
-  const cameraControlsActions = makeCameraControlsActions(sources$)
-  const dataParamsActions = makeDataParamsActions(sources$)
+  const cameraControlsActions = makeCameraControlsActions(sources)
+  const dataParamsActions = makeDataParamsActions(sources)
   const actions = most.mergeArray(dataParamsActions.concat(cameraControlsActions))
   // combine proxy state & real state
   attach(makeState(actions, state, regl))
@@ -112,10 +117,14 @@ const makeCsgViewer = function (element, options = {}, inputs$ = most.never()) {
   // .startWith(state)
   // skipRepeatsWith
   // re-render whenever state changes, since visuals are a function of the state
-  state$.forEach(state => {
-    // console.log('sending data for render', state)
-    state.render(state)
-  })
+  state$
+    /*.skipRepeatsWith(function (state, previousState) {
+      const sameViewerParams = JSON.stringify(state) === JSON.stringify(previousState)
+      return sameViewerParams
+    })*/
+    .forEach(state => {
+      state.render(state)
+    })
   // dispatch initial params/state
   params$.next(state)
 
