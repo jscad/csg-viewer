@@ -19,7 +19,7 @@ const drawMesh = function (regl, params) {
     void main() {
       gl_Position = projection * view * model * vec4(position, 1);
     }`,
-    
+
     uniforms: {
       model: (context, props) => props && props.model ? props.model : mat4.identity([]),
       uColor: (context, props) => props && props.color ? props.color : [1, 1, 1, 1]
@@ -28,6 +28,16 @@ const drawMesh = function (regl, params) {
       position: geometry.positions
     },
     elements: geometry.cells,
+    cull: {
+      enable: false
+    },
+    blend: {
+      enable: false,
+      func: {
+        src: 'src alpha',
+        dst: 'one minus src alpha'
+      }
+    }
   }
   return regl(commandParams)
 }

@@ -53,11 +53,17 @@ const drawAxis = function (regl, params) {
   const yAxisModel = mat4.rotateZ(mat4.create(), mat4.identity([]), Math.PI / 2)
   const zAxisModel = mat4.rotateY(mat4.create(), mat4.identity([]), -Math.PI / 2)
   let single = regl(commandParams)
-  return () => single([
-    { color: xColor, model: xAxisModel }, // X
-    { color: yColor, model: yAxisModel }, // Y
-    { color: zColor, model: zAxisModel } // Z
-  ])
+  return (props) => {
+    const defaults = {
+      model: mat4.identity([])
+    }
+    props = Object.assign({}, defaults, props)
+    return single([
+      { color: xColor, model: mat4.multiply(mat4.create(), props.model, xAxisModel) }, // X
+      { color: yColor, model: mat4.multiply(mat4.create(), props.model, yAxisModel) }, // Y
+      { color: zColor, model: mat4.multiply(mat4.create(), props.model, zAxisModel) } // Z
+    ])
+  }
 }
 
 module.exports = drawAxis

@@ -3,6 +3,7 @@ const renderWrapper = require('./renderWrapper')
 const makeDrawMeshNoNormals = require('./drawMeshNoNormals')
 const makeDrawAxis = require('./drawAxis')
 const makeDrawNormals = require('./drawNormals')
+const makeDrawConnector = require('./drawConnector')
 
 const prepareRender = (regl, params) => {
   // const drawGrid = prepDrawGrid(regl, {fadeOut: true, ticks: 10, size: [1000, 1000]})
@@ -26,6 +27,8 @@ const prepareRender = (regl, params) => {
 
   const drawTest = makeDrawMeshNoNormals(regl, {geometry: cube})
   const drawAxis = makeDrawAxis(regl, {})
+  const drawConnector = makeDrawConnector(regl, {})
+
   let command = (props) => {
     // console.log('params in render', props)
     const {camera, drawCommands} = props
@@ -53,6 +56,7 @@ const prepareRender = (regl, params) => {
       if (props.axes.show) {
         drawAxis() // needs to be last to be 'on top' of the scene
       }
+      drawConnector()
       // drawNormals()
     })
   }
