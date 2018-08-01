@@ -13,6 +13,7 @@ function actions (sources) {
   let rotations$ = gestures.drags
     .filter(x => x !== undefined) // TODO: add this at gestures.drags level
     .map(function (data) {
+      // console.log('rotation',data.originalEvents[0].target)
       let delta = [data.delta.x, data.delta.y]
       const {shiftKey} = data.originalEvents[0]
       if (!shiftKey) {
@@ -97,8 +98,15 @@ function actions (sources) {
   ])
   .multicast()
 
-  const update$ = heartBeat$.thru(limitFlow(33))
-    .map(_ => ({type: 'update', data: undefined}))
+  /*const update$ = heartBeat$.thru(limitFlow(33))
+    .map(_ => ({type: 'update', data: undefined}))*/
+  const update$ = most.mergeArray([
+    rotations$,
+    zoom$,
+    reset$,
+    zoomToFit$,
+    resizes$
+  ]).map(_ => ({type: 'update', data: undefined}))
 
   return [
     rotations$,

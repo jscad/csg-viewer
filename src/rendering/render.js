@@ -56,7 +56,7 @@ const prepareRender = (regl, params) => {
       if (props.axes.show) {
         drawAxis() // needs to be last to be 'on top' of the scene
       }
-      drawConnector()
+      // drawConnector()
       // drawNormals()
     })
   }

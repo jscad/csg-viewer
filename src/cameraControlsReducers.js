@@ -33,6 +33,7 @@ function makeReducers (initialState) {
       return resetState
     },
     toPresetView: (state, viewName) => {
+      console.log('to preset view', viewName)
       const newState = merge({}, state, {camera: toPresetView(viewName, state)})
       return newState
     },

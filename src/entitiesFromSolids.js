@@ -20,7 +20,7 @@ function entitiesFromSolids (baseParams, solids) {
     if ('sides' in solid) {
       type = '2d'
       geometry = cagToGeometries(solid, {color: defaultColor})
-    } else {
+    } else if ('polygons' in solid) {
       type = '3d'
       geometry = csgToGeometries(solid, {
         smoothLighting: baseParams.smoothNormals,

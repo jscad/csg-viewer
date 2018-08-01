@@ -15,13 +15,12 @@ function makeState (actions, initialState, regl) {
       try {
         const updatedData = reducer(state, action.data, initialState, regl)
         const newState = merge({}, state, updatedData)
+        // console.log('SCAAAN', action, newState)
         return newState
       } catch (error) {
         console.error('error', error)
         return merge({}, state, {error})
       }
-
-      // console.log('SCAAAN', action, newState)
     }, initialState)
     .filter(x => x !== undefined)// just in case ...
     .multicast()
