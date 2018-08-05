@@ -30,6 +30,7 @@ function entitiesFromSolids (baseParams, solids) {
     // geometry = flatten(geometries)// FXIME : ACTUALLY deal with arrays since a single csg can
     // generate multiple geometries if positions count is >65535
     geometry = flatten(geometry)[0]
+
     // const time = (performance.now() - start) / 1000
     // console.log(`Total time for geometry conversion: ${time} s`)
     // console.log('geometry', geometry)

@@ -8,7 +8,13 @@ function makeReducers (initialState, regl) {
       // const render = prepareRender(regl, Object.assign({}, state, {entities}))
       const makeDrawMesh = require('./rendering/drawMesh/index')
       const drawCSGs = entities
-        .map(e => makeDrawMesh(state.regl, {geometry: e.geometry, type: e.type}))
+        .map(entity => {
+          const {geometry, type} = entity
+          let drawMesh = makeDrawMesh(state.regl, {geometry, type})
+          drawMesh.isTransparent = geometry.isTransparent
+          drawMesh.entity = entity
+          return drawMesh
+        })
       return {
         entities,
         drawCommands: {

@@ -31,6 +31,9 @@ function csgToGeometries (csgs, options) {
     let normals = []
     let indices = []
 
+    // flag for transparency
+    let isTransparent = false
+
     const polygons = csg.canonicalized().toPolygons()
 
     /* let positions = new Float32Array(faces * 3 * 3)
@@ -46,6 +49,10 @@ function csgToGeometries (csgs, options) {
       const color = polygonColor(polygon, faceColorRgb)
       const rawNormal = polygon.plane.normal
       const normal = [rawNormal.x, rawNormal.y, rawNormal.z]
+
+      if (color[3] !== 1) {
+        isTransparent = true
+      }
 
       const polygonIndices = []
       // we need unique tupples of normal + position , that gives us a specific index (indices)
@@ -104,21 +111,22 @@ function csgToGeometries (csgs, options) {
           geometries.push({
             indices,
             positions,
-            normals
+            normals,
+            isTransparent
           })
         } else {
           geometries.push({
             indices,
             positions,
             normals,
-            colors
+            colors,
+            isTransparent
           })
         }
       }
     }
     return geometries
   }
-
   return geometriesPerCsg
 }
 

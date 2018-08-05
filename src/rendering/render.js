@@ -40,12 +40,23 @@ const prepareRender = (regl, params) => {
         color: props.rendering.background,
         depth: 1
       })
-      drawCSGs.forEach((drawCSG, index) => {
-        const entity = props.entities[index]
+
+      const transparents = drawCSGs.filter(drawCall => drawCall.isTransparent)
+      const nonTransparents = drawCSGs.filter(drawCall => !drawCall.isTransparent)
+
+      nonTransparents.forEach(drawCall => {
+        const {entity} = drawCall
         const primitive = entity.type === '2d' ? 'lines' : 'triangles'
         const model = entity.transforms.matrix
-        drawCSG({color: props.rendering.meshColor, primitive, useVertexColors, camera, model})
+        drawCall({color: props.rendering.meshColor, primitive, useVertexColors, camera, model})
       })
+      transparents.forEach(drawCall => {
+        const {entity} = drawCall
+        const primitive = entity.type === '2d' ? 'lines' : 'triangles'
+        const model = entity.transforms.matrix
+        drawCall({color: props.rendering.meshColor, primitive, useVertexColors, camera, model})
+      })
+
       // drawTest({color: [1, 0, 0, 1], model: mat4.translate(mat4.create(), mat4.identity([]), [100, 0, 200])})
       if (drawGrid && props.grid.show) {
         const gridColor = props.grid.color

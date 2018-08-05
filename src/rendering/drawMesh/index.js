@@ -61,12 +61,13 @@ const drawMesh = function (regl, params = {extras: {}}) {
       enable: true,
       face: cullFace
     },
+    depth: {
+      enable: true,    
+    },
     blend: {
-      enable: false,
-      func: {
-        src: 'src alpha',
-        dst: 'one minus src alpha'
-      }
+      enable: true,
+      
+      func: {src:'src alpha',dst:'one minus src alpha'}
     },
     primitive: (context, props) => props && props.primitive ? props.primitive : 'triangles'
   }
