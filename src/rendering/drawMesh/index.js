@@ -30,7 +30,7 @@ const drawMesh = function (regl, params = {extras: {}}) {
   if (type === '2d') {
     frag = require('./colorOnlyShaders').frag
   }
-  console.log('type', type)
+  // console.log('type', type)
   // const vert = vColorVert
   // const frag = vColorFrag
 
@@ -62,12 +62,12 @@ const drawMesh = function (regl, params = {extras: {}}) {
       face: cullFace
     },
     depth: {
-      enable: true,    
+      enable: true
     },
     blend: {
       enable: true,
-      
-      func: {src:'src alpha',dst:'one minus src alpha'}
+
+      func: {src: 'src alpha', dst: 'one minus src alpha'}
     },
     primitive: (context, props) => props && props.primitive ? props.primitive : 'triangles'
   }

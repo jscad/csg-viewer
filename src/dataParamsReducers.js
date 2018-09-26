@@ -3,6 +3,7 @@ const entitiesFromSolids = require('./entitiesFromSolids')
 function makeReducers (initialState, regl) {
   const reducers = {
     setEntitiesFromSolids: (state, data, initialState, regl) => {
+      const startTime = new Date()
       const entities = entitiesFromSolids(initialState, data)
       // we need to update the render function to provide the new geometry data from entities
       // const render = prepareRender(regl, Object.assign({}, state, {entities}))
@@ -15,6 +16,8 @@ function makeReducers (initialState, regl) {
           drawMesh.entity = entity
           return drawMesh
         })
+      const totalTime = new Date() - startTime
+      console.warn(`total time to generate geometry and draw calls: ${totalTime}`)
       return {
         entities,
         drawCommands: {
